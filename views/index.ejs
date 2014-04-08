@@ -1,91 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>Nockmarket</title>
-  <meta name="viewport"
-  content="width=device-width, initial-scale=1.0">
-  <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.2/css/bootstrap.css" rel="stylesheet">
-  <link href="//spbooks.github.io/nodejs1/docs.css" rel="stylesheet">
-  <script src="//cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.js"></script>
-  <script type="text/javascript" src="http://spbooks.github.io/nodejs1/jquery.js"></script>
-  <script type="text/javascript" src="http://spbooks.github.io/nodejs1/bootstrap-button.js"></script>
-  <script type="text/javascript" src="http://spbooks.github.io/nodejs1/bootstrap-modal.js"></script>
-  <script type="text/javascript" src="http://spbooks.github.io/nodejs1/bootstrap-transition.js"></script>
-  <script type="text/javascript" src="/js/nockclient.js"></script>
-</head>
-<body>
-  <div id="signupModal" class="modal hide fade smallModal">
-    <form id="signup-form" action="/signup" method="post" class="form-horizontal">
-      <div class="modal-header"><a data-dismiss="modal"  class="close"></a>
-        <h3>Sign Up Today</h3></div>
-        <div class="modal-body">
-          <fieldset>
-            <div class="control-group">
-              <input type="text" name="username" placeholder="Username" class="input-xlarge uname"/>
-              <span id="imagePlaceHolder"></span>
+  <head>
+    <meta charset="utf-8">
+    <title>Nockmarket</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/lib/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/lib/css/bootstrap-theme.min.css" rel="stylesheet">
+    <script type="text/javascript" src="/lib/js/jquery-2.1.0.min.js"></script>
+    <script type="text/javascript" src="/lib/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/js/index.js"></script>
+  </head>
+  <body>
+    <div id="signupModal" class="modal fade">
+      <form role="form" id="signup-form" action="/signup" method="post" class="form-horizontal">
+
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <a data-dismiss="modal"  class="close"></a>
+              <h3 class="modal-title">Sign Up Today</h3>
             </div>
-            <div class="control-group">
-              <input type="text" name="email" placeholder="Email" class="input-xlarge"/>
+            <div class="modal-body">
+              <div class="form-group usernameGroup">
+                <label for="username">Username</label>
+                <span id="errorPlaceholder"></span>
+                <input class="form-control uname" type="text" name="username" placeholder="Username" />
+              </div>
+              <div class="form-group">
+                <label for="email">Email</label>
+                <input class="form-control" type="text" name="email" placeholder="Email" />
+              </div>
+              <div class="form-group">
+                <label for="password">Password</label>
+                <input id="password" class="form-control" type="password" name="password" placeholder="Password" />
+              </div>
+              <div class="form-group">
+                <label for="passwordConfirm">Confirm Password</label>
+                <input id="confirmPassword" class="form-control" type="password" name="passwordConfirm" placeholder="Confirm Password" />
+              </div>
             </div>
-            <div class="control-group">
-              <input type="password" name="password" placeholder="Password" class="input-xlarge"/>
+            <div class="modal-footer"><a href="#" data-dismiss="modal" class="btn btn-default">Close</a>
+              <button class="btn btn-primary create-button" type="submit">Create Account</button>
             </div>
-          </fieldset>
-        </div>
-        <div class="modal-footer"><a href="#" data-dismiss="modal" class="btn">Close</a>
-          <button class="btn btn-primary create-button" type="submit">Create Account</button>
+          </div>
         </div>
       </form>
+
     </div>
-    <div id="loginModal" class="modal hide fade smallModal">
-      <form id="login-form" action="/login" method="post" class="form-horizontal">
-        <div class="modal-header">
-          <a data-dismiss="modal" class="close"></a>
-          <h3>Log In</h3>
-        </div>
-        <div class="modal-body">
-          <fieldset>
-            <div class="control-group">
-              <input type="text" name="username" placeholder="Username" class="input-xlarge uname"/>
-              <span id="imagePlaceHolder"></span>
+    <div id="loginModal" class="modal fade">
+      <form role="form" id="login-form" action="/login" method="post" class="form-horizontal">
+
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <a data-dismiss="modal" class="close"></a>
+              <h3 class="modal-title">Log In</h3>
             </div>
-            <div class="control-group">
-              <input type="password" name="password" placeholder="Password" class="input-xlarge"/>
+            <div class="modal-body">
+
+              <fieldset>
+                <div class="form-group">
+                  <label for="username">Username</label>
+                  <input class="form-control" type="text" name="username" placeholder="Username" />
+                </div>
+                <div class="form-group">
+                  <label for="password">Password</label>
+                  <input class="form-control" type="password" name="password" placeholder="Password" />
+                </div>
+              </fieldset>
+
             </div>
-          </fieldset>
+            <div class="modal-footer">
+              <a href="#" data-dismiss="modal" class="btn btn-default">Close</a>
+              <button class="btn btn-primary" type="submit">Log In</button>
+            </div>
+          </div>
         </div>
-        <div class="modal-footer">
-          <a href="#" data-dismiss="modal" class="btn">Close</a>
-          <button class="btn btn-primary" type="submit">Log In</button>
-        </div>
-      </form> 
+      </form>
+
     </div>
     <div class="container">
       <div class="marketing">
-        <h1>Nockmarket</h1>
-        <p class="marketing-byline">Welcome to the Node.js stockmarket</p>
-        <div class="row offset2">
-          <div class="span4">
-            <i class="icon-fire"></i>
-            <h2>Real Prices</h2>
+        <div class="row text-center">
+          <div class="col-sm-8 col-sm-offset-2">
+            <h1>
+              Nockmarket
+              <br>
+              <small>Welcome to the Node.js stockmarket</small>
+            </h1>
+          </div>
+        </div>
+        <div class="row text-center">
+          <div class="col-sm-4 col-sm-offset-2">
+            <h2><small class="glyphicon glyphicon-fire"></small> Real Prices</h2>
             <p>Here you will be able to sign up for an account and create a stock portfolio with live prices. This will combine the beauty of Bootstrap with the performance of Node.js to create a well designed, blazing  stock tracking tool.</p>
           </div>
-          <div class="span4">
-            <i class="icon-book"></i>
-            <h2>Live Data</h2>
+          <div class="col-sm-4">
+            <h2>Live Data <small class="glyphicon glyphicon-book"></small></h2>
             <p>We will also construct a dummy portfolio to show you how to stream real-time data straight into your browser. Once you have mastered the basics you will be able to stream any type of data from tweets, to chat to auction data.</p>
           </div>
         </div>
       </div>
-      <header class="jumbotron masthead">
-        <div class="inner">
-          <p class="download-info">
-            <a data-toggle="modal" href="#loginModal" class="btn btn-large">Log In</a>
-            <a data-toggle="modal" href="#signupModal" class="btn btn-primary btn-large">Sign Up</a>
-          </p>
+
+      <div class="row">
+        <div class="col-xs-12">
+          <hr>
         </div>
-      </header>
+      </div>
+
+      <div class="row">
+        <div class="col-xs-4 col-xs-offset-2 text-center">
+          <a data-toggle="modal" data-target="#loginModal" class="btn btn-default">Log In</a>
+        </div>
+        <div class="col-xs-4 text-center">
+          <a data-toggle="modal" data-target="#signupModal" class="btn btn-primary">Sign Up</a>
+        </div>
+      </div>
     </div>
+
+
   </body>
-  </html>
+</html>

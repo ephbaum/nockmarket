@@ -47,22 +47,31 @@ module.exports = {
     } );
   },
   login: function( req, res ) {
-    nocklib.authenticate( req.body.username, req.body.password,
-            function( err, id ) {
-              if ( id ) {
-                req.session._id = id;
-                req.session.username = req.body.username;
-                res.redirect( '/portfolio' );
-              } else {
-                res.redirect( '/' );
-              }
-            } );
+    callAuthenticationMethod( req, res );
   },
   signup: function( req, res ) {
-    nocklib.createUser( req.body.username, req.body.email, req.body.password,
-            function( err, user ) {
-              console.log( user );
-              res.redirect( '/portfolio' );
-            } );
+    if ( req.body.password === req.body.passwordConfirm ) {
+      nocklib.createUser( req.body.username, req.body.email, req.body.password,
+              function( err, user ) {
+                console.log( user );
+                console.log( req );
+                callAuthenticationMethod( req, res );
+              } );
+    } else {
+      res.redirect( '/404' );
+    }
   }
+};
+
+function callAuthenticationMethod( req, res ) {
+  nocklib.authenticate( req.body.username, req.body.password,
+          function( err, id ) {
+            if ( id ) {
+              req.session._id = id;
+              req.session.username = req.body.username;
+              res.redirect( '/portfolio' );
+            } else {
+              res.redirect( '/404' );
+            }
+          } );
 }

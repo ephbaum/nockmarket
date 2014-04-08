@@ -7,14 +7,27 @@ $( document ).on( 'ready', function() {
     $( '.chat-widget' ).show();
     socket.emit( 'joined', { } );
   } );
-  $( '#send-chat' ).click( function() {
+  $( "#chatMessage" ).keydown( function( e ) {
+    var code = e.which;
+    if ( code == 13 ) {
+      e.preventDefault();
+      socket.emit( 'clientchat', {
+        message: $( '#chatMessage' ).val()
+      } );
+      $( '#chatMessage' ).val( '' );
+    }
+  } );
+  $( '#send-chat' ).click( function( e ) {
     socket.emit( 'clientchat', {
-      message: $( '#input01' ).val()
+      message: $( '#chatMessage' ).val()
     } );
-    $( '#input01' ).val( '' );
+    $( '#chatMessage' ).val( '' );
   } );
   socket.on( 'chat', function( data ) {
-    $( '#textarea' ).append( data.message );
+    $( '#textarea' ).append( data.message ).animate( {
+      scrollTop: $( "#textarea" )[0].scrollHeight - $( "#textarea" ).height()
+    },
+    250 );
     if ( data.username ) {
       $( '#users' ).append( '<span class="label label-success" id="username-' + data.username + '"">' + data.username + '</span>' );
     }

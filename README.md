@@ -36,7 +36,9 @@ I do not own any of this code and to be honest I didn't get any indication from 
 ###Some Links(?)
 
 *[Jump Start Node.js](http://www.sitepoint.com/store/jump-start-node-js/)
+
 *[Original Project Code](https://github.com/spbooks/NODEJS1)
+
 *[Demo for my version](http://fskirschbaum-nockmarket.herokuapp.com)
 
 ---

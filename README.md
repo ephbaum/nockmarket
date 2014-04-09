@@ -11,7 +11,7 @@ Based on the application outlined in the **SitePoint Book Jump Start Node.js** b
 
 I have made some modifications such as upgrading some of the packages to more current iterations as well as improving the overall look and feel of the app by making it more responsive. You can check out my version [here](http://fskirschbaum-nockmarket.herokuapp.com).
 
-I picked this ebook up for free and decided to work my way through it. I am running a MacBook Pro Retina with OS X 10.9 Mavericks and ran into various issues with some of the information in the book being out a bit out of date since its publication in *2012*, an eternity by rights and regards.
+I picked this ebook up for free and decided to work my way through it. I am running a MacBook Pro Retina with OS X 10.9 Mavericks and ran into various issues with some of the information in the book being out a bit out of date since its publication in *2012*, an eternity by all rights and regards.
 
 As I worked through it I decided to update my code as I went and when I was done I decided to improve it further to give me more learning opportunity along the way.
 
@@ -29,28 +29,29 @@ A word of warning, however, is that this book tackles a lot of different topics 
 
 ###License Information(?)
 
-I do not own any of this code and to be honest I didn't get any indication from the book that there were any license restrictions, however, I assume it's best not to use this code as in on your production project. So, if you have questions about the license, use, and copyright of the code contained herein, you're probably better off asking the book's author.
+I do not own any of this code and to be honest I didn't get any indication from the book that there were any license restrictions, however, I assume it's best not to use this code as-is on your production project. So, if you have questions about the license, use, and copyright of the code contained herein, you're probably better off asking the book's author.
 
 ---
 
 ###Some Links(?)
 
-[Jump Start Node.js](http://www.sitepoint.com/store/jump-start-node-js/)
-[Original Project Code](https://github.com/spbooks/NODEJS1)
-
-[Demo for my version](http://fskirschbaum-nockmarket.herokuapp.com)
+*[Jump Start Node.js](http://www.sitepoint.com/store/jump-start-node-js/)
+*[Original Project Code](https://github.com/spbooks/NODEJS1)
+*[Demo for my version](http://fskirschbaum-nockmarket.herokuapp.com)
 
 ---
 
 ####What's next?
 
-I plan to poke at this this a bit more going forward and add a few more components as I do. Mainly, I want to implement a bit more account management, play with updating the password security and anything else that I feel like playing around with.
+I plan to poke at this this a bit more going forward. Mainly, I want to implement a bit more account management, toy with updating the password security, maybe a logout button, perhaps do some more with the public stocks, improve the filtering and anything else that I feel like playing around with.
+
+Maybe...
 
 ---
 
 #####Heaps of Praise? Burning Hatred?
 
-If you like what I've done or feel that I am someone *wrong* on the **internet** and need to be put in my place, you can reach out to me here or on [twitter](https://twitter.com/fyrephlie). I make no promises on how I'll respond, though, but usually I'm a relatively pleasant person. 
+If you like what I've done or feel that I am someone *wrong* on the **internet** and need to be put in my place, you can reach out to me here or on [twitter](https://twitter.com/fyrephlie). I make no promises on how I'll respond, though, but I'm usually a relatively pleasant person.
 
 To be clear, though, I make no promises that what I've done here is perfect or could not have been achieved better. I'm sure there are bound to be problems with my code. If you see something you think I could have done better, feel free to let me know (in a constructive way) as I'm always looking for feedback to help me learn and grow as a developer.
 

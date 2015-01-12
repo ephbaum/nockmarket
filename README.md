@@ -51,7 +51,7 @@ Maybe...
 
 #####Heaps of Praise? Burning Hatred?
 
-If you like what I've done or feel that I am someone *wrong* on the **internet** and need to be put in my place, you can reach out to me here or on [twitter](https://twitter.com/fyrephlie). I make no promises on how I'll respond, though, but I'm usually a relatively pleasant person.
+If you like what I've done or feel that I am someone *wrong* on the **internet** and need to be put in my place, you can reach out to me here or on [twitter](https://twitter.com/fskirschbaum). I make no promises on how I'll respond, though, but I'm usually a relatively pleasant person.
 
 To be clear, though, I make no promises that what I've done here is perfect or could not have been achieved better. I'm sure there are bound to be problems with my code. If you see something you think I could have done better, feel free to let me know (in a constructive way) as I'm always looking for feedback to help me learn and grow as a developer.
 

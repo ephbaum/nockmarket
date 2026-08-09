@@ -21,7 +21,6 @@ export default [
       'public/templates/**', // Underscore-compiled template, deleted by P3a
       'public/js/**', // rewritten in place (vanilla ESM) by P3a; current files use jQuery/Backbone/Underscore globals this config intentionally does not define
       'test/db.test.js', // superseded by P1e's test/db/**
-      'test/exchange.test.js', // superseded by P1a's test/order-book/**
     ],
   },
 

@@ -76,8 +76,12 @@ export function getDb() {
  *   arbiter of username uniqueness instead of a client-side, racy
  *   findOne-then-insert check.
  * - transactions: { stock: 1, ts: -1 } for the per-symbol trade-history
- *   query (findTrades), and { init: 1, ts: -1 } for filtering by the
+ *   query (findTrades), and { side: 1, ts: -1 } for filtering by the
  *   initiating side.
+ *
+ *   Note: the 2014 schema called this field `init` ('b'/'s'). The rewrite
+ *   stores `side` ('buy'/'sell') — see insertOrder in transactions.js —
+ *   so the index follows the field that is actually written.
  *
  * If the users collection already contains case-duplicate usernames
  * (e.g. "bob" and "Bob"), the unique index build fails server-side. That
@@ -107,7 +111,7 @@ export async function ensureIndexes() {
   }
 
   await database.collection('transactions').createIndex({ stock: 1, ts: -1 });
-  await database.collection('transactions').createIndex({ init: 1, ts: -1 });
+  await database.collection('transactions').createIndex({ side: 1, ts: -1 });
 }
 
 function isDuplicateKeyError(err) {

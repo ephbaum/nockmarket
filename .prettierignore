@@ -1,0 +1,20 @@
+package-lock.json
+coverage/
+node_modules/
+
+# Pre-modernization code, generated assets, and vendored libraries.
+# Mirrors eslint.config.js's ignores list 1:1 and for the same reason:
+# these are deleted or wholesale-rewritten by later work packages (P1a,
+# P1e, P2, P3a, P3b — see /root/.claude/plans), so `npm run format:check`
+# should report on the code being built, not on code already staged for
+# removal. Each entry is removed by the package that deletes/rewrites the
+# corresponding files, not before.
+lib/
+routes/
+nockmarket.js
+public/lib/
+public/js/
+public/stylesheets/
+test/db.test.js
+test/exchange.test.js
+README.md

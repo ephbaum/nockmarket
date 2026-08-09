@@ -1,0 +1,24 @@
+NOTICE
+======
+
+This project began as an exercise built from:
+
+  "Jump Start Node.js" by Don Nguyen (SitePoint / SitePoint Pty. Ltd.)
+  https://www.sitepoint.com/store/jump-start-node-js/
+
+The original companion source code for the book is published at:
+
+  https://github.com/spbooks/NODEJS1
+
+No explicit license was published by SitePoint or the book's author for the
+companion code, and this repository's own history has long carried a note
+disclaiming ownership of that derived material (see the pre-modernization
+README). The LICENSE file in this repository (MIT) covers only F. Stephen
+Kirschbaum's own modifications, rewrites, and additions on top of that
+starting point — the 2014-2015 changes, and the Node 22 / ESM modernization
+begun in 2026 — not a license grant over the original book's code or
+SitePoint's own rights, if any, in the source material it published.
+
+If you are the rights holder for the original "Jump Start Node.js" companion
+code and believe this NOTICE mischaracterizes its licensing status, please
+open an issue.

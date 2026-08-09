@@ -1,5 +1,6 @@
 node_modules
+.git
+coverage
 .env
-coverage/
 *.log
-.DS_Store
+test

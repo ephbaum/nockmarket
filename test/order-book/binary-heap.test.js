@@ -75,10 +75,7 @@ describe('BinaryHeap', () => {
     assert.deepEqual(popped, [10, 20, 40, 50, 60, 70]);
   });
 
-  test('remove() bubbles the replacement element up when it sorts before its new parent', () => {
-    // Shape a heap where removing the root forces the array's tail element
-    // into a slot whose parent is larger than it — the bubble-up branch of
-    // remove(), as opposed to the sink-down branch exercised above.
+  test('remove() sinks the replacement down when it belongs below its new parent', () => {
     const heap = new BinaryHeap(MIN);
     for (const v of [1, 5, 2, 10, 9, 8, 3]) heap.push(v);
     const removed = heap.remove(1);
@@ -86,6 +83,20 @@ describe('BinaryHeap', () => {
     const popped = [];
     while (heap.size() > 0) popped.push(heap.pop());
     assert.deepEqual(popped, [2, 3, 5, 8, 9, 10]);
+  });
+
+  test('remove() bubbles the replacement element up when it sorts before its new parent', () => {
+    // A middle node (8) is removed while the array's tail element (3)
+    // belongs to an unrelated sibling branch and is smaller than it — the
+    // replacement must bubble up past its new parent, the branch remove()
+    // takes when comparator(end, removedValue) < 0.
+    const heap = new BinaryHeap(MIN);
+    for (const v of [1, 8, 2, 20, 21, 5, 3]) heap.push(v);
+    const removed = heap.remove(8);
+    assert.equal(removed, true);
+    const popped = [];
+    while (heap.size() > 0) popped.push(heap.pop());
+    assert.deepEqual(popped, [1, 2, 3, 5, 20, 21]);
   });
 
   test('remove() of an absent value returns false and leaves the heap intact', () => {

@@ -5,19 +5,14 @@ import globals from 'globals';
 import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default [
-  // Global ignores. Pre-modernization code and vendored client libraries
-  // are being deleted/rewritten wholesale by later work packages (see
-  // /root/.claude/plans — P1a, P1e, P2, P3a); linting them is pure noise
-  // over code that won't exist by the time this migration is done. Each
-  // entry here is removed by the same work package that deletes the
-  // corresponding files, not before.
+  // Global ignores. public/lib/**, public/templates/** and public/js/**
+  // were ignored here while they still held pre-modernization vendored
+  // code (jQuery/Backbone/Underscore/Bootstrap) and were pending rewrite
+  // by P3a. That package deleted the vendored files and rewrote
+  // public/js/** as vanilla ES modules, so all three entries are gone —
+  // public/js/** is linted with real browser globals below.
   {
-    ignores: [
-      'coverage/**',
-      'public/lib/**', // vendored jquery/backbone/underscore/bootstrap, deleted by P3a
-      'public/templates/**', // Underscore-compiled template, deleted by P3a
-      'public/js/**', // rewritten in place (vanilla ESM) by P3a; current files use jQuery/Backbone/Underscore globals this config intentionally does not define
-    ],
+    ignores: ['coverage/**'],
   },
 
   js.configs.recommended,

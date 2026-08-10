@@ -1,90 +1,117 @@
-$( document ).ready( function() {
-  $( '#add-stock' ).click( function( e ) {
-    $.ajax( {
-      type: 'POST',
-      url: '/add-stock',
-      data: {
-        stock: $( '#stock' ).val()
-      }
-    } ).done( function( price ) {
-      $( '.stock-list' ).append( '<tr><td>' + $( '#stock' ).val() + '</td><td>' + price + '</td></tr>' );
-    } );
-  } );
+// Entry point for the /portfolio page: wires up the tab switcher, the
+// add-stock form, the client-side filter, and the three socket-backed
+// panels (market ladder, chat, account).
+import { initTabs } from './tabs.js';
+import { initTrades } from './trades.js';
+import { initChat } from './chat.js';
+import { initAccount } from './accounts.js';
 
-  var PortfolioModel = Backbone.Model.extend( {
-    defaults: {
-      visible: true
-    },
-    setVisible: function( visible ) {
-      this.set( {
-        visible: visible
-      } );
+function csrfToken() {
+  return document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+}
+
+function renderPortfolioRows(tbody, portfolio) {
+  tbody.textContent = '';
+  for (const holding of portfolio) {
+    const tr = document.createElement('tr');
+    tr.dataset.stock = holding.stock;
+
+    const stockCell = document.createElement('th');
+    stockCell.scope = 'row';
+    stockCell.textContent = holding.stock;
+
+    const volumeCell = document.createElement('td');
+    volumeCell.textContent = String(holding.volume);
+
+    const priceCell = document.createElement('td');
+    priceCell.append(holding.price === null ? '—' : holding.price.toFixed(2));
+    if (holding.stale) {
+      const stale = document.createElement('small');
+      stale.textContent = ' (stale)';
+      priceCell.appendChild(stale);
     }
-  } );
 
-  var PortfolioCollection = Backbone.Collection.extend( {
-    model: PortfolioModel,
-    url: '/portfolio'
-  } );
+    tr.append(stockCell, volumeCell, priceCell);
+    tbody.appendChild(tr);
+  }
+}
 
-  var PortfolioView = Backbone.View.extend( {
-    el: 'body',
-    events: {
-      'click .add-filter': 'filter'
-    },
-    filter: function() {
-      var filterString = $( '#filter' ).val();
-      var data = window.portfolioCollection.models;
-      for ( var i = 0; i < data.length; i++ ) {
-        if ( data[i].toJSON().stock.toLowerCase().indexOf( filterString.toLowerCase() ) == -1 ) {
-          data[i].setVisible( false );
-        } else {
-          data[i].setVisible( true );
-        }
-      }
-    },
-    initialize: function() {
-      self = this;
-      window.portfolioCollection = new PortfolioCollection();
-      window.portfolioCollection.fetch( {
-        success: function() {
-          self.render();
+function renderErrors(container, errors) {
+  if (!container) {
+    return;
+  }
+  container.textContent = (errors ?? ['Something went wrong.']).join(' ');
+}
+
+function initAddStock() {
+  const form = document.getElementById('add-stock-form');
+  const tbody = document.getElementById('portfolio-body');
+  if (!form || !tbody) {
+    return;
+  }
+  const errorBox = document.getElementById('add-stock-errors');
+  const stockInput = document.getElementById('stock-input');
+  const volumeInput = document.getElementById('volume-input');
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (errorBox) {
+      errorBox.textContent = '';
+    }
+
+    const stock = stockInput.value.trim().toUpperCase();
+    const volume = volumeInput.value ? Number(volumeInput.value) : 1;
+
+    let response;
+    try {
+      response = await fetch('/api/add-stock', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'x-csrf-token': csrfToken(),
         },
-        error: function() {
-          console.log( 'Error fetching data for portfolio.' );
-        }
-      } );
-    },
-    render: function() {
-      for ( var i = 0; i < window.portfolioCollection.models.length; i++ ) {
-        var data = window.portfolioCollection.models[i];
-        var rowView = new RowView( {
-          model: data
-        } );
-        $( '.stock-list' ).append( rowView.render().el );
-      }
+        body: JSON.stringify({ stock, volume }),
+      });
+    } catch {
+      renderErrors(errorBox, ['Could not reach the server.']);
+      return;
     }
-  } );
 
-  var RowView = Backbone.View.extend( {
-    tagName: 'tr',
-    initialize: function() {
-      _.bindAll( this, 'setVisibility' );
-      this.model.bind( 'change', this.setVisibility );
-    },
-    setVisibility: function() {
-      if ( !this.model.toJSON().visible ) {
-        $( this.el ).hide();
-      } else {
-        $( this.el ).show();
-      }
-    },
-    render: function() {
-      var template = _.template( "<td><%=stock%></td><td><%=price%></td>" );
-      $( this.el ).html( template( this.model.toJSON() ) );
-      return this;
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      renderErrors(errorBox, data.errors);
+      return;
     }
-  } );
 
-  new PortfolioView();
-} );
+    renderPortfolioRows(tbody, data.portfolio ?? []);
+    stockInput.value = '';
+    volumeInput.value = '1';
+  });
+}
+
+function initFilter() {
+  const filterInput = document.getElementById('filter-input');
+  const tbody = document.getElementById('portfolio-body');
+  if (!filterInput || !tbody) {
+    return;
+  }
+  filterInput.addEventListener('input', () => {
+    const needle = filterInput.value.trim().toLowerCase();
+    for (const row of tbody.rows) {
+      const stock = (row.dataset.stock ?? '').toLowerCase();
+      row.hidden = needle.length > 0 && !stock.includes(needle);
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initTabs();
+  initAddStock();
+  initFilter();
+  initTrades();
+  initChat();
+  initAccount();
+});

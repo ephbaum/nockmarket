@@ -1,0 +1,24 @@
+<header class="container">
+  <nav>
+    <ul>
+      <li><a href="/portfolio"><strong>Nockmarket</strong></a></li>
+    </ul>
+    <ul>
+      <li>
+        <a href="/portfolio" <% if (typeof active !== 'undefined' && active === 'portfolio') { %>aria-current="page"<% } %>>Portfolio</a>
+      </li>
+      <li>
+        <a href="/chart" <% if (typeof active !== 'undefined' && active === 'chart') { %>aria-current="page"<% } %>>Chart</a>
+      </li>
+      <% if (typeof username !== 'undefined' && username) { %>
+      <li><span class="nav-username"><%= username %></span></li>
+      <% } %>
+      <li>
+        <form class="logout-form" method="post" action="/logout">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+          <button type="submit" class="secondary">Log Out</button>
+        </form>
+      </li>
+    </ul>
+  </nav>
+</header>

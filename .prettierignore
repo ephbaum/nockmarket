@@ -2,14 +2,8 @@ package-lock.json
 coverage/
 node_modules/
 
-# Pre-modernization code, generated assets, and vendored libraries.
-# Mirrors eslint.config.js's ignores list 1:1 and for the same reason:
-# these are deleted or wholesale-rewritten by later work packages (P1a,
-# P1e, P2, P3a, P3b — see /root/.claude/plans), so `npm run format:check`
-# should report on the code being built, not on code already staged for
-# removal. Each entry is removed by the package that deletes/rewrites the
-# corresponding files, not before.
-public/lib/
-public/js/
-public/stylesheets/
+# public/lib/, public/js/ and public/stylesheets/ were ignored here while
+# they held pre-modernization vendored code and Bootstrap-era CSS pending
+# rewrite by P3a. That package deleted the vendored files and rewrote the
+# views/JS/CSS from scratch, so all three entries are gone.
 README.md

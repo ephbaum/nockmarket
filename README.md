@@ -1,253 +1,198 @@
-#Nockmarket
-===
-#### A (**No**)de.js Sto(**ck**) (**Market**) Web Application
----
+# Nockmarket
 
-Based on the application outlined in the **SitePoint Book Jump Start Node.js** by *Don Nguyen*.
+A simulated stock exchange (limit order book + a handful of fake tickers) bolted onto a portfolio
+web app — sign up, watch fake stocks tick, buy some, chat with whoever else is connected. It began
+as a walkthrough of the SitePoint book *Jump Start Node.js* by Don Nguyen, written in 2014 against
+Node 0.8. This repository is a from-scratch modernization of that project onto Node 22 + ES modules,
+with the original defects fixed rather than carried forward. See `docs/ARCHITECTURE.md` for how it's
+built and `NOTICE` for the full history and attribution.
 
----
+**What this is not:** a real trading system, an example of production security hardening beyond
+what's noted below, or a maintained product. It's a teaching artifact — read the code, break it,
+learn from it. See [Known limitations](#known-limitations-this-is-a-teaching-app).
 
-###Huh?
+> **The old Heroku demo is gone.** Earlier versions of this README linked a live demo at
+> `fskirschbaum-nockmarket.herokuapp.com`. Heroku retired free dynos in November 2022, and that demo
+> has been dead since. Don't click it — run it yourself instead, which takes about as long either
+> way (see below).
 
-I have made some modifications such as upgrading some of the packages to more current iterations as well as improving the overall look and feel of the app by making it more responsive. You can check out my version [here](http://fskirschbaum-nockmarket.herokuapp.com).
+## Quick start
 
-I picked this ebook up for free and decided to work my way through it. I am running a MacBook Pro Retina with OS X 10.9 Mavericks and ran into various issues with some of the information in the book being out a bit out of date since its publication in *2012*, an eternity by all rights and regards.
+You need Node 22+ either way. Pick one:
 
-As I worked through it I decided to update my code as I went and when I was done I decided to improve it further to give me more learning opportunity along the way.
+### Docker (zero setup, zero API keys)
 
-I figured there was a chance that others might encounter the same problems along their way as well and decided to dump everything here. Since I'd already `git push heroku master`'d it, it seemed like a trivial thing to also push it up to GitHub as well. 
-
----
-
-###Verdict?
-
-Overall I have to say that I enjoyed this project. I was already sold on Node.js before jumping into this but I did like the approachable way the book runs through code to help you dive into the wonderful world of Node.js. I would recommend this for anyone looking to try out node without a lot of barrier to entry, anyone that learns better by doing, and anyone who already has some experience developing in some capacity.
-
-A word of warning, however, is that this book tackles a lot of different topics along the way and sometimes the author glosses a bit over things in the interest of keeping pace with producing a useful product. For example, Backbone.js makes an appearence in this text but there is almost *no* explanation of what you're really tackling by using that library. I think the reasons are obvious when you bear in mind that this is a book about getting a jump start on Node.js and not a tome on full life-cycle development of a web application for both front- and back-end. He does take the time, however, to point out resources that will help you get a deeper understanding of pretty much everything along the way giving you the opportunity to dive deeper if you want.
-
----
-
-###License Information(?)
-
-I do not own any of this code and to be honest I didn't get any indication from the book that there were any license restrictions, however, I assume it's best not to use this code as-is on your production project. So, if you have questions about the license, use, and copyright of the code contained herein, you're probably better off asking the book's author.
-
----
-
-###Some Links(?)
-
-* [Jump Start Node.js](http://www.sitepoint.com/store/jump-start-node-js/)
-* [Original Project Code](https://github.com/spbooks/NODEJS1)
-* [Demo for my version](http://fskirschbaum-nockmarket.herokuapp.com)
-
----
-
-####What's next?
-
-I plan to poke at this this a bit more going forward. Mainly, I want to implement a bit more account management, toy with updating the password security, maybe a logout button, perhaps do some more with the public stocks, improve the filtering and anything else that I feel like playing around with.
-
-Maybe...
-
----
-
-#####Heaps of Praise? Burning Hatred?
-
-If you like what I've done or feel that I am someone *wrong* on the **internet** and need to be put in my place, you can reach out to me here or on [twitter](https://twitter.com/fskirschbaum). I make no promises on how I'll respond, though, but I'm usually a relatively pleasant person.
-
-To be clear, though, I make no promises that what I've done here is perfect or could not have been achieved better. I'm sure there are bound to be problems with my code. If you see something you think I could have done better, feel free to let me know (in a constructive way) as I'm always looking for feedback to help me learn and grow as a developer.
-
----
-
-## Contract
-
-This project is being modernized to Node 22 + ES modules (Express 5, MongoDB driver 7,
-Socket.IO 4). This section is the **frozen interface** that all of the modernization work builds
-against — npm scripts, environment variables, Socket.IO event names, the market data-wire shape,
-and the database repository signatures. It is written and locked before the corresponding
-implementation exists, specifically so that independent pieces of work can be built against it in
-parallel without colliding. (P3b will eventually replace the rest of this README with a proper
-quickstart/architecture doc; this section stays put until then.)
-
-### npm scripts
-
-| Script             | Command                                                | Notes                                                                                                                     |
-| ------------------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| `start`            | `node src/server.js`                                   | Production entry point.                                                                                                   |
-| `dev`              | `node --watch --env-file-if-exists=.env src/server.js` | Auto-restarts on change; loads `.env` if present, no error if it's not.                                                   |
-| `test`             | `node --test --experimental-test-coverage test/`       | Unit tests. **Must run with no database and no network.**                                                                 |
-| `test:integration` | `node --test test/**/*.integration.test.js`            | Needs a reachable `MONGODB_URI`; individual test files self-skip (`{ skip: !process.env.MONGODB_URI }`) when it's absent. |
-| `lint`             | `eslint .`                                             | Flat config, see `eslint.config.js`.                                                                                      |
-| `lint:fix`         | `eslint . --fix`                                       |                                                                                                                           |
-| `format`           | `prettier --write .`                                   |                                                                                                                           |
-| `format:check`     | `prettier --check .`                                   | CI gate; nothing merges unformatted.                                                                                      |
-
-### Environment variables
-
-Parsed and validated in one place: `src/config.js`. Copy `.env.example` to `.env` — every default
-below is chosen so that `cp .env.example .env && npm run dev` (or `docker compose up`, which
-doesn't even need a `.env` file) works with zero edits.
-
-| Var                 | Type                                    | Default                                | Required?                                                                                                                                                                                                                                                                              |
-| ------------------- | --------------------------------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PORT`              | integer                                 | `3000`                                 | No                                                                                                                                                                                                                                                                                     |
-| `NODE_ENV`          | `development` \| `production` \| `test` | `development`                          | No                                                                                                                                                                                                                                                                                     |
-| `MONGODB_URI`       | string (mongodb connection URI)         | `mongodb://localhost:27017/nockmarket` | No                                                                                                                                                                                                                                                                                     |
-| `SESSION_SECRET`    | string                                  | none                                   | **Yes, in production** — the app fails fast at startup if unset. In `development`, an ephemeral secret is generated at startup with a loud warning logged (sessions won't survive a restart) if left unset.                                                                            |
-| `QUOTE_PROVIDER`    | `fake` \| `stooq`                       | `fake`                                 | No                                                                                                                                                                                                                                                                                     |
-| `QUOTE_SEED`        | integer                                 | `42`                                   | No — only consumed by the `fake` provider.                                                                                                                                                                                                                                             |
-| `QUOTE_BUCKET_MS`   | integer (milliseconds)                  | `5000`                                 | No — only consumed by the `fake` provider.                                                                                                                                                                                                                                             |
-| `SIMULATOR_ENABLED` | boolean                                 | `true`                                 | No                                                                                                                                                                                                                                                                                     |
-| `SIMULATOR_SYMBOLS` | comma-separated string                  | `NOCK1,NOCK2,NOCK3,NOCK4,NOCK5`        | No                                                                                                                                                                                                                                                                                     |
-| `SIMULATOR_MIN_MS`  | integer (milliseconds)                  | `500`                                  | No                                                                                                                                                                                                                                                                                     |
-| `SIMULATOR_MAX_MS`  | integer (milliseconds)                  | `3000`                                 | No                                                                                                                                                                                                                                                                                     |
-| `LEGACY_MD5_LOGIN`  | boolean                                 | `true`                                 | No — the cutoff switch for accepting legacy unsalted-MD5 password hashes at login (upgraded to scrypt in place on successful verification). Once flipped to `false`, any remaining MD5 accounts must reset their password — there is no batch migration, because MD5 isn't reversible. |
-| `TRUST_PROXY`       | boolean or integer (hop count)          | `false`                                | No — set truthy only when actually behind a reverse proxy, so `secure` cookies and rate limiting see the real client.                                                                                                                                                                  |
-
-### Socket.IO events
-
-| Event             | Direction        | Payload                                                                                            |
-| ----------------- | ---------------- | -------------------------------------------------------------------------------------------------- |
-| `chat:message`    | client ↔ server  | `{ username, message, ts }`                                                                        |
-| `presence:join`   | server → clients | `{ username }`                                                                                     |
-| `presence:leave`  | server → clients | `{ username }`                                                                                     |
-| `market:snapshot` | server → client  | Full order-book state for a stock, sent on (re)subscribe. Shape: see "Market payload shape" below. |
-| `market:delta`    | server → clients | Same shape as `market:snapshot`, broadcast on every order (not only on trades).                    |
-| `account:update`  | client → server  | Client requests its own account/portfolio be re-sent.                                              |
-| `account:updated` | server → client  | Updated account/portfolio state.                                                                   |
-
-> **Never use `disconnect` as a custom event name.** It is a reserved event in Socket.IO v3+
-> (`socket.io`/`socket.emit('disconnect', ...)` throws at runtime). This bit the pre-modernization
-> code (`nocklib.js:91`) and must not recur — search the defect register for `R3` for the full
-> history.
-
-### Market payload shape
-
-```js
-{
-  stock: 'NOCK1',
-  lastTrade: { price: 101.5, volume: 100 },
-  bids: [ { price: 101.25, volume: 200 }, { price: 101.0, volume: 50 } ],
-  asks: [ { price: 101.75, volume: 150 }, { price: 102.0, volume: 300 } ],
-}
+```sh
+git clone <this-repo>
+cd nockmarket
+docker compose up
 ```
 
-- `price` and `volume` are always **numbers** (never strings) — the legacy payload's
-  `Object.keys()`-derived string prices are gone.
-- `bids` and `asks` are arrays, **sorted best-first** (highest bid first, lowest ask first), and
-  contain only real levels — no phantom entries for empty levels, no reliance on integer-key
-  object property ordering.
-- `lastTrade` is `null` if the stock has not traded yet this session.
+Wait for both services to report healthy, then open **http://localhost:3000**. No `.env` file, no
+API key, no separately-installed MongoDB — `compose.yaml` runs Mongo alongside the app and supplies
+a demo session secret for you. Sign up on the site directly (a form, top of the page), or see
+[Demo data](#demo-data) below to script an account instead.
 
-### Database repository signatures
+Stop it with `docker compose down` (add `-v` to also drop the Mongo volume).
 
-Two repository modules own all Mongo access; nothing else in the app talks to the driver
-directly. Both are async, take/return plain objects, and never leak driver-specific shapes
-(`insertedId`, `ObjectId` casing, etc.) past their own boundary.
+### Plain Node
 
-```js
-// src/db/users.js
-
-/**
- * Create a new user. Rejects with `DuplicateUserError` (checking the
- * unique index on `usernameLower`, not a check-then-insert race) if the
- * username is already taken, case-insensitively.
- * @param {{ username: string, email: string, passwordHash: string, passwordAlgo: string }} user
- * @returns {Promise<{ _id: string, username: string, email: string, portfolio: object[] }>}
- */
-export async function create(user) {}
-
-/**
- * @param {string} username - matched case-insensitively via `usernameLower`.
- * @returns {Promise<object|null>}
- */
-export async function findByUsername(username) {}
-
-/**
- * @param {string} id
- * @returns {Promise<object|null>}
- */
-export async function findById(id) {}
-
-/**
- * @param {string} id
- * @param {string} email
- * @returns {Promise<object|null>} the updated user document, or null if not found.
- */
-export async function updateEmail(id, email) {}
-
-/**
- * @param {string} id
- * @param {{ stock: string, volume: number }} holding
- * @returns {Promise<object|null>} the updated user document, or null if not found.
- */
-export async function addToPortfolio(id, holding) {}
-
-/**
- * @param {string} id
- * @param {string} passwordHash
- * @param {string} [passwordAlgo] - defaults to the current scheme (scrypt).
- * @returns {Promise<object|null>} the updated user document, or null if not found.
- */
-export async function updatePasswordHash(id, passwordHash, passwordAlgo) {}
+```sh
+npm ci
+cp .env.example .env    # every default already works; edit only if you want to change something
+npm run dev
 ```
 
-```js
-// src/db/transactions.js
+`npm run dev` needs a MongoDB it can reach at `MONGODB_URI` (default
+`mongodb://localhost:27017/nockmarket`) — the app connects to it before it starts listening, and
+without one reachable it will sit there for up to ~30 seconds and then fail rather than exit
+instantly. If you don't already have a `mongod` running locally, the fastest way to get one is:
 
-/**
- * Persist a submitted order (independent of whether it traded).
- * @param {{ stock: string, side: 'buy'|'sell', price: number, volume: number, ts: Date }} order
- * @returns {Promise<object>} the stored order document, including `_id`.
- */
-export async function insertOrder(order) {}
-
-/**
- * Persist the trade(s) a single order submission produced. Called with
- * the trades `OrderBook#submit()` actually returned — never re-derived
- * from a separately-read book state (that mismatch was defect E2).
- * @param {Array<{ stock: string, price: number, volume: number, ts: Date }>} trades
- * @returns {Promise<object[]>} the stored trade documents, including `_id`.
- */
-export async function insertTrades(trades) {}
-
-/**
- * @param {{ stock: string, limit?: number }} query - `stock` filters to one
- *   ticker (fixes the old code merging every ticker into one series);
- *   `limit` bounds the result count, most recent first, ordered by the
- *   real stored `ts` (not reverse-engineered from an ObjectId hex prefix).
- * @returns {Promise<object[]>}
- */
-export async function findTrades({ stock, limit }) {}
+```sh
+docker run -d -p 27017:27017 --name nockmarket-mongo mongo:7
 ```
 
-### Health check
+Once it's up, open **http://localhost:3000**. `npm run dev` auto-restarts on file changes
+(`node --watch`).
 
-`GET /healthz` → `200` with JSON:
+## Demo data
 
-```js
-{ status: 'ok' | 'degraded', mongo: 'up' | 'down', uptime: 12.34 }
+```sh
+node scripts/seed.js
 ```
 
-`uptime` is process uptime in seconds (`process.uptime()`). Used by the Dockerfile
-`HEALTHCHECK` and by `compose.yaml`'s app healthcheck.
+Creates one demo user (`demo` / `demo-password-123` by default — override with the `SEED_USERNAME`,
+`SEED_EMAIL`, `SEED_PASSWORD` env vars) using the exact same repository and password-hashing code
+the app itself uses, so it can never drift from what a real signup produces. It reads `MONGODB_URI`
+the same way the app does, and is safe to run more than once (a second run detects the existing
+account and does nothing, rather than failing on the unique username index).
 
-### Target `src/` layout
+This is **not** currently wired up to run inside the Docker container — `Dockerfile` doesn't copy
+`scripts/` into the image, and `compose.yaml` doesn't publish Mongo's port to the host, so there's
+no path from a host shell to the compose stack's database today. For the `docker compose up`
+workflow, just sign up through the web UI; for the plain-Node workflow above, `node scripts/seed.js`
+works as described.
 
-```
-src/
-  server.js              entry; wires app + io + simulator, owns signals and shutdown
-  app.js                 createApp({config, db, quotes}) -> app   (exported for supertest)
-  config.js              env parsing + validation, single source of truth
-  routes/                pages.js · auth.js · api.js
-  realtime/              io.js · chat.js · market.js · presence.js
-  simulator/             index.js (start/stop) · random-order.js (pure)
-  quotes/                index.js · fake.js · stooq.js
-  db/                    client.js · users.js · transactions.js
-  auth/                  password.js · session.js
-  order-book/            ← extractable. index.js · order-book.js · binary-heap.js
-```
+## Environment variables
 
-`src/order-book/**` is enforced (via an ESLint `no-restricted-imports` rule, see
-`eslint.config.js`) to import nothing outside its own directory — no relative escapes, no bare
-package specifiers. Everything else reaches it only through `src/order-book/index.js`. That
-constraint is what keeps the matching engine a `git mv` + a `package.json` away from being
-published as a standalone package later, rather than a rewrite.
+Parsed and validated in one place: `src/config.js`. This table matches it exactly — if the two ever
+disagree, `src/config.js` is the one that's actually running. `cp .env.example .env` and every
+default below applies with zero edits; `docker compose up` supplies its own values and needs no
+`.env` file at all.
+
+| Var | Type | Default | Required? |
+|---|---|---|---|
+| `PORT` | integer | `3000` | No |
+| `NODE_ENV` | `development` \| `production` \| `test` | `development` | No |
+| `MONGODB_URI` | string (`mongodb://` or `mongodb+srv://` URI) | `mongodb://localhost:27017/nockmarket` | No |
+| `SESSION_SECRET` | string | none | **Yes, in production** — the app refuses to start rather than fall back to a default. In `development`, an ephemeral secret is generated at startup with a loud warning (sessions won't survive a restart) if left unset. |
+| `QUOTE_PROVIDER` | `fake` \| `stooq` | `fake` | No |
+| `QUOTE_SEED` | integer | `42` | No — only consumed by the `fake` provider. |
+| `QUOTE_BUCKET_MS` | integer (ms) | `5000` | No — only consumed by the `fake` provider. |
+| `SIMULATOR_ENABLED` | boolean | `true` | No |
+| `SIMULATOR_SYMBOLS` | comma-separated string | `NOCK1,NOCK2,NOCK3,NOCK4,NOCK5` | No |
+| `SIMULATOR_MIN_MS` | integer (ms) | `500` | No — must be `<= SIMULATOR_MAX_MS`. |
+| `SIMULATOR_MAX_MS` | integer (ms) | `3000` | No |
+| `LEGACY_MD5_LOGIN` | boolean | `true` | No — accepts legacy unsalted-MD5 password hashes at login, upgrading them to scrypt in place on success. See [Password migration](docs/ARCHITECTURE.md#password-hashing-and-the-md5--scrypt-migration) for why this can only ever be lazy, never a batch job. |
+| `TRUST_PROXY` | boolean or integer (hop count) | `false` | No — set truthy only when actually behind a reverse proxy, so `secure` cookies and client-IP-based rate limiting see the real client. |
+
+Booleans accept `true`/`false`/`1`/`0`, case-insensitively. Anything that fails to parse (a
+non-integer `PORT`, an out-of-range `SIMULATOR_MIN_MS`, an unknown `QUOTE_PROVIDER`, …) is collected
+and reported together in one error at startup, not one crash at a time.
+
+## Quote providers
+
+Stock prices come from a small pluggable interface (`src/quotes/index.js`); which one is active is
+just `QUOTE_PROVIDER`. See `docs/ARCHITECTURE.md` for the interface itself and why it's keyed by
+symbol rather than by array position.
+
+| Provider | Needs a key? | Needs network? | Behavior |
+|---|---|---|---|
+| `fake` (default) | No | No | Deterministic per-symbol random walk seeded from `QUOTE_SEED`; the same symbol at the same `QUOTE_BUCKET_MS`-sized time bucket always returns the same price. This is what makes `docker compose up` and the test suite work fully offline. |
+| `stooq` | No | Yes (stooq.com) | Real (delayed) quotes over plain HTTPS. Chosen specifically because it needs no API key, so this code path is exercisable by anyone who clones the repo — not dead code behind a secret nobody has. Failures (timeout, bad response, an unresolved symbol) degrade to a stale cached quote or `null`, never a crash. |
+
+**Adding a third provider** is one new file plus one line: implement `{ name, async
+getQuotes(symbols) -> Map<symbol, Quote|null> }` in `src/quotes/your-provider.js` (never throw,
+never omit a requested symbol from the returned `Map`, never derive one symbol's value from
+another's position), then register it in `src/quotes/index.js`'s `registry` map. A worked ~40-line
+sketch for a keyed provider (Finnhub) is in the comment block at the top of `src/quotes/stooq.js`.
+
+## npm scripts
+
+| Script | Command | Notes |
+|---|---|---|
+| `start` | `node src/server.js` | Production entry point. |
+| `dev` | `node --watch --env-file-if-exists=.env src/server.js` | Auto-restarts on change; loads `.env` if present, no error if it's not. |
+| `test` | `node --test --experimental-test-coverage "test/**/*.test.js"` | Unit tests. Runs with no database and no network. |
+| `test:integration` | `node --test "test/**/*.integration.test.js"` | Needs a reachable `MONGODB_URI`; individual test files self-skip when it's absent. |
+| `lint` | `eslint .` | Flat config, see `eslint.config.js`. |
+| `lint:fix` | `eslint . --fix` | |
+| `format` | `prettier --write .` | |
+| `format:check` | `prettier --check .` | CI gate; nothing merges unformatted. |
+
+There is no `npm run seed` — `package.json`'s dependency and script set was frozen early in this
+project's modernization so parallel work couldn't collide on it, so the seed script (added after
+that point) is run directly: `node scripts/seed.js` (see [Demo data](#demo-data)).
+
+## Known limitations (this is a teaching app)
+
+- **Fake exchange.** The five `NOCK*` tickers and their prices are entirely synthetic; nothing here
+  reflects a real market, and `stooq`, when enabled, only ever *reads* real quotes — you cannot
+  trade anything real through this app under any configuration.
+- **No password reset flow.** If `LEGACY_MD5_LOGIN` is turned off and an account is still on MD5,
+  or if anyone simply forgets a password, there is no self-service recovery — see
+  `docs/ARCHITECTURE.md` for why a legacy password can't be migrated any other way.
+- **Single-process only.** Sessions live in Mongo (via `connect-mongo`) so they survive a restart,
+  but the order book and simulator state are in-memory per process — running more than one app
+  replica gives each one its own, independent, disagreeing order book.
+- **Rate limiting is per-process and in-memory**, not shared across replicas, and not intended to
+  withstand a determined attacker — it exists to close the obvious brute-force and enumeration
+  holes in the original code, not to be a production-grade defense.
+- **The chat room is one global room.** Everyone connected sees every message; there's no concept of
+  channels or private messages.
+- **`Procfile` is a leftover from the old Heroku deployment** and points at a file
+  (`nockmarket.js`) that no longer exists in this codebase. Ignore it; the real entry point is
+  `npm start` / `node src/server.js`.
+- **This has not received a professional security review.** CSRF, rate limiting, a strict CSP,
+  salted+stretched password hashing, and session fixation protection are all in place (see
+  `docs/ARCHITECTURE.md`), closing the specific defects the original 2014 code had — that is a
+  different claim from "safe to expose to the public internet with real user data."
+
+## Contributing
+
+See `CONTRIBUTING.md`.
+
+## History and attribution
+
+This project began in 2014 as the author's walkthrough of *Jump Start Node.js* by Don Nguyen
+(SitePoint), picked up as a free ebook and worked through on a Node version the book itself was
+already slightly out of date for. The original author's account, lightly condensed from the
+pre-modernization README:
+
+> I have made some modifications such as upgrading some of the packages to more current iterations
+> as well as improving the overall look and feel of the app by making it more responsive... As I
+> worked through it I decided to update my code as I went, and when I was done I decided to improve
+> it further to give me more learning opportunity along the way.
+>
+> Overall I have to say that I enjoyed this project. I was already sold on Node.js before jumping
+> into this but I did like the approachable way the book runs through code to help you dive into
+> Node.js. I would recommend this for anyone looking to try out Node without a lot of barrier to
+> entry, anyone that learns better by doing, and anyone who already has some experience developing
+> in some capacity. A word of warning, however: this book tackles a lot of different topics along
+> the way and sometimes glosses over things in the interest of keeping pace — Backbone.js makes an
+> appearance with almost no explanation of what you're really taking on by using it. That's a
+> reasonable tradeoff for a book about getting a jump start on Node, not a tome on full life-cycle
+> web development, and the author does point out further resources along the way.
+
+The repository sat untouched from January 2015 until this modernization: current supported
+versions of everything (Node 22, Express 5, MongoDB driver 7, Socket.IO 4), the matching engine's
+correctness defects fixed, unsalted MD5 replaced with scrypt, and a Docker Compose setup that runs
+with zero API keys and zero external network by default. See `docs/ARCHITECTURE.md` for what
+changed and why.
+
+* [Jump Start Node.js](https://www.sitepoint.com/store/jump-start-node-js/) — the book this started from.
+* [Original companion code](https://github.com/spbooks/NODEJS1) — SitePoint's own repository for the book.
+
+No license was ever published by SitePoint or the book's author for the companion code this project
+began from. This repository's `LICENSE` (MIT) covers only the modifications layered on top of that
+starting point — see `NOTICE` for the full explanation.

@@ -14,8 +14,6 @@ export default [
   {
     ignores: [
       'coverage/**',
-      'lib/**', // deleted by P1a (exchange.js, BinaryHeap.js) + P1e (db.js) + P2 (nocklib.js)
-      'nockmarket.js', // deleted by P2
       'public/lib/**', // vendored jquery/backbone/underscore/bootstrap, deleted by P3a
       'public/templates/**', // Underscore-compiled template, deleted by P3a
       'public/js/**', // rewritten in place (vanilla ESM) by P3a; current files use jQuery/Backbone/Underscore globals this config intentionally does not define

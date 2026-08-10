@@ -9,8 +9,6 @@ node_modules/
 # should report on the code being built, not on code already staged for
 # removal. Each entry is removed by the package that deletes/rewrites the
 # corresponding files, not before.
-lib/
-nockmarket.js
 public/lib/
 public/js/
 public/stylesheets/

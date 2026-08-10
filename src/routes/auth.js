@@ -86,11 +86,19 @@ export function createAuthRouter({ users, config, logger }) {
   });
 
   router.post('/logout', (req, res) => {
-    const { userId } = req.session ?? {};
-    // P2b attaches a hook here to disconnect this user's sockets: the
-    // Socket.IO session is snapshotted at handshake time, so an open
-    // socket does NOT notice the session being destroyed on its own.
-    res.locals.loggedOutUserId = userId;
+    const { username } = req.session ?? {};
+
+    // Drop this user's sockets explicitly. The Socket.IO session is
+    // snapshotted onto socket.data at handshake time, so destroying the
+    // session server-side does NOT make an already-open socket notice —
+    // without this it would keep chatting after its owner logged out.
+    // Registered by src/server.js once the realtime layer exists; absent
+    // in HTTP-only tests, hence the optional call.
+    const disconnectUser = req.app.get('disconnectUser');
+    if (username && typeof disconnectUser === 'function') {
+      disconnectUser(username);
+    }
+
     req.session?.destroy(() => {
       res.clearCookie('connect.sid');
       if (wantsJson(req)) {

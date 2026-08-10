@@ -10,7 +10,6 @@ node_modules/
 # removal. Each entry is removed by the package that deletes/rewrites the
 # corresponding files, not before.
 lib/
-routes/
 nockmarket.js
 public/lib/
 public/js/

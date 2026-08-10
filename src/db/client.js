@@ -68,6 +68,20 @@ export function getDb() {
 }
 
 /**
+ * The underlying MongoClient. Exposed so the session store (connect-mongo)
+ * can reuse this connection instead of dialling a second one — sharing the
+ * client is the point of replacing the old MemoryStore (S10).
+ * @returns {import('mongodb').MongoClient}
+ * @throws {Error} if connect() has not been called yet.
+ */
+export function getClient() {
+  if (!client) {
+    throw new Error('Database not connected. Call connect(uri) before getClient().');
+  }
+  return client;
+}
+
+/**
  * Create (or confirm) the indexes the app depends on. Idempotent — safe
  * to call on every startup; MongoDB no-ops a createIndex call that
  * already matches an existing index.

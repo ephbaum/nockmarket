@@ -43,7 +43,7 @@
 //   registry.set('finnhub', (env) => createFinnhubProvider(env));
 // ---------------------------------------------------------------------
 
-const SYMBOL_RE = /^[A-Z][A-Z.-]{0,9}$/;
+const SYMBOL_RE = /^[A-Z][A-Z0-9.-]{0,9}$/;
 
 const ENDPOINT = 'https://stooq.com/q/l/?s=';
 const TIMEOUT_MS = 3000;

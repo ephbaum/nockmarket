@@ -22,7 +22,7 @@
 // "for free" instead of needing an unbounded accumulator that must be
 // clamped after the fact.
 
-const SYMBOL_RE = /^[A-Z][A-Z.-]{0,9}$/;
+const SYMBOL_RE = /^[A-Z][A-Z0-9.-]{0,9}$/;
 
 const WEYL_INCREMENT = 0x6d2b79f5n;
 const MASK32 = 0xffffffffn;

@@ -150,9 +150,6 @@ that point) is run directly: `node scripts/seed.js` (see [Demo data](#demo-data)
   holes in the original code, not to be a production-grade defense.
 - **The chat room is one global room.** Everyone connected sees every message; there's no concept of
   channels or private messages.
-- **`Procfile` is a leftover from the old Heroku deployment** and points at a file
-  (`nockmarket.js`) that no longer exists in this codebase. Ignore it; the real entry point is
-  `npm start` / `node src/server.js`.
 - **This has not received a professional security review.** CSRF, rate limiting, a strict CSP,
   salted+stretched password hashing, and session fixation protection are all in place (see
   `docs/ARCHITECTURE.md`), closing the specific defects the original 2014 code had — that is a

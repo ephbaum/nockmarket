@@ -2,6 +2,11 @@ services:
   mongo:
     image: mongo:7
     restart: unless-stopped
+    # Published on the host so `node scripts/seed.js` and one-off queries
+    # can reach the stack from outside a container. Bound to 127.0.0.1 so
+    # an unauthenticated dev database is never exposed to the network.
+    ports:
+      - '127.0.0.1:27017:27017'
     volumes:
       - mongo-data:/data/db
     healthcheck:

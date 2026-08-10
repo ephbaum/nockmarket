@@ -23,6 +23,8 @@ COPY package.json package-lock.json ./
 COPY src ./src
 COPY views ./views
 COPY public ./public
+# Needed so `docker compose exec app node scripts/seed.js` works.
+COPY scripts ./scripts
 
 USER node
 EXPOSE 3000

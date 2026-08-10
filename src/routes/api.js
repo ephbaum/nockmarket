@@ -1,18 +1,8 @@
-// JSON API.
+// JSON API. Closes C3, C6, C7, C11, S6.
 //
-// Replaces routes/nockroutes.js:4-22 and the inline /api/trades handler at
-// nockmarket.js:89-115. Defects closed here:
-//   C3 — POST /add-stock was wrapped in `if (req.xhr)` with no else, so a
-//        non-XHR post never received any response and the socket hung. It
-//        also hung whenever the quote lookup errored, because the 2-counter
-//        callback in nocklib.addStock never reached 2.
-//   C6 — GET /api/trades blended all five tickers into one price series.
-//   C7 — it derived timestamps from the ObjectId hex prefix, giving
-//        1-second granularity, which forced a throttle that discarded most
-//        points. Trades now carry a real `ts`.
-//   C11 — `res.send(price)` returned a raw CSV string as the body.
-//   S6 — POST /add-stock had no auth guard; `new ObjectID(undefined)`
-//        minted a fresh id and the update silently no-opped.
+// The old /add-stock was wrapped in `if (req.xhr)` with no else, so a
+// non-XHR post never got a response at all, and a failed quote lookup hung
+// it too (a 2-counter callback that never reached 2).
 import { Router } from 'express';
 
 const SYMBOL_RE = /^[A-Z][A-Z0-9.-]{0,9}$/;
@@ -26,38 +16,34 @@ const MAX_TRADE_LIMIT = 1000;
 export function createApiRouter({ users, transactions, quotes, requireAuth, logger }) {
   const router = Router();
 
-  // Rate-limited by the caller. Note this endpoint is inherently an
-  // account-enumeration oracle: it answers "does this username exist" to
-  // anyone who asks. It is kept because the signup form uses it for
-  // availability feedback, but signup correctness must NOT depend on it —
-  // the unique index on users.usernameLower is the real check (S7).
+  // Inherently an account-enumeration oracle, so it is rate-limited and
+  // signup correctness must not depend on it — the unique index is the real
+  // check (S7). Kept only for availability feedback on the form.
   router.get('/user/:username', async (req, res) => {
     const user = await users.findByUsername(req.params.username);
     res.json({ available: !user });
   });
 
-  // Hands the current session's CSRF token to fetch() callers. Safe to
-  // expose: the same-origin policy stops a cross-site attacker from
-  // reading the response, and the token is scoped to this session. Views
-  // also render it directly (hidden input + <meta>), but this keeps
-  // script-driven clients from having to scrape the DOM for it.
+  // Safe to expose: same-origin policy stops a cross-site attacker reading
+  // the response, and the token is scoped to this session. Saves
+  // script-driven clients from scraping the DOM for it.
   router.get('/csrf-token', (req, res) => {
     res.json({ csrfToken: res.locals.csrfToken });
   });
 
   router.get('/trades', async (req, res) => {
     const { stock } = req.query;
+    // C6: a series is meaningless without knowing which instrument it is,
+    // so the filter is required rather than optional.
     if (typeof stock !== 'string' || !SYMBOL_RE.test(stock)) {
-      // C6: a series is meaningless without knowing which instrument it
-      // belongs to, so the filter is required rather than optional.
       return res.status(400).json({ errors: ['A ?stock= query parameter is required.'] });
     }
 
     const limit = clampLimit(req.query.limit);
     const trades = await transactions.findTrades({ stock, limit });
 
-    // Highcharts/uPlot want [[epochMillis, price], ...] oldest-first.
-    // findTrades returns newest-first, so reverse a copy.
+    // uPlot wants [[epochMillis, price], ...] oldest-first; findTrades
+    // returns newest-first.
     const series = [...trades].reverse().map((t) => [new Date(t.ts).getTime(), t.price]);
 
     res.json({ stock, series });
@@ -81,10 +67,9 @@ export function createApiRouter({ users, transactions, quotes, requireAuth, logg
       return res.status(404).json({ errors: ['User not found.'] });
     }
 
-    // Quotes are keyed by symbol. Look up by key — never by array index.
-    // The old code zipped portfolio[i] with prices[i], so a single
-    // unresolved symbol shifted every subsequent price onto the wrong
-    // ticker (C1). Never reintroduce a positional pairing here.
+    // By key, never by index: the old code zipped portfolio[i] with
+    // prices[i], so one unresolved symbol shifted every subsequent price
+    // onto the wrong ticker (C1).
     const priced = await priceHoldings(updated.portfolio, quotes, logger);
 
     // C3: always respond, XHR or not. C11: JSON, not a raw CSV string.
@@ -95,8 +80,7 @@ export function createApiRouter({ users, transactions, quotes, requireAuth, logg
 }
 
 /**
- * Pair each holding with its quote by symbol key.
- * Shared with the /portfolio page route so both render identical data.
+ * Shared with the /portfolio page so both render identical data.
  * @returns {Promise<Array<{stock, volume, price: number|null, stale: boolean}>>}
  */
 export async function priceHoldings(portfolio = [], quotes, logger) {
@@ -105,9 +89,8 @@ export async function priceHoldings(portfolio = [], quotes, logger) {
     return [];
   }
 
-  // getQuotes never throws and never rejects (C5) — a total upstream
-  // failure still resolves with null for every affected symbol, so this
-  // does not need a try/catch and must not take the process down.
+  // getQuotes never throws or rejects (C5): a total upstream failure still
+  // resolves with null per symbol, so no try/catch is needed here.
   const bySymbol = await quotes.getQuotes(symbols);
 
   return portfolio.map((holding) => {

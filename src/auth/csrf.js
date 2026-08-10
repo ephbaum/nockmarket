@@ -1,18 +1,13 @@
-// Session-backed synchronizer CSRF tokens (S5).
+// Session-backed synchronizer CSRF tokens (S5). The 2014 app had none:
+// /login, /signup and /add-stock accepted any cross-origin form post.
 //
-// The 2014 app had no CSRF protection at all: /login, /signup and
-// /add-stock accepted any cross-origin form post.
+// Chosen over double-submit-cookie (csrf-csrf), which exists for stateless
+// services with nowhere to keep per-session state. This app has a real
+// session store, so the secret never has to leave the server — and it
+// avoids adding cookie-parser purely to satisfy a library that reads
+// req.cookies.
 //
-// Why this rather than the double-submit-cookie library (csrf-csrf):
-// double-submit exists for stateless services that have nowhere to keep
-// per-session state. This app has a real server-side session store
-// (connect-mongo), so the synchronizer pattern is the stronger and simpler
-// fit — the secret never leaves the server, and there is no second cookie
-// to parse. It also avoids pulling in cookie-parser purely to satisfy a
-// library that wants to read req.cookies.
-//
-// Defence in depth: SameSite=Lax on the session cookie (see session.js)
-// already blocks the cross-site form post; this is the second layer.
+// SameSite=Lax on the session cookie is the first layer; this is the second.
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
@@ -28,13 +23,9 @@ export class CsrfError extends Error {
 }
 
 /**
- * Issues a per-session token, exposes it as `res.locals.csrfToken` for
- * views, and rejects unsafe requests that do not present it.
- *
- * Views render it two ways (both consumed by the frontend):
- *   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
- *   <meta name="csrf-token" content="<%= csrfToken %>">
- * fetch() callers send it as the `x-csrf-token` header.
+ * Exposes the token as `res.locals.csrfToken`. Views render it as a hidden
+ * `_csrf` input and a `<meta name="csrf-token">`; fetch() callers send it
+ * as the `x-csrf-token` header.
  *
  * @returns {import('express').RequestHandler}
  */
@@ -92,7 +83,7 @@ function tokenFromRequest(req) {
   return typeof header === 'string' && header.length > 0 ? header : null;
 }
 
-/** Length-guarded so timingSafeEqual cannot throw on a mismatched size. */
+/** Length-guarded: timingSafeEqual throws on a size mismatch. */
 function constantTimeEquals(a, b) {
   const bufA = Buffer.from(String(a));
   const bufB = Buffer.from(String(b));

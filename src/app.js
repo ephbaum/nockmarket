@@ -1,16 +1,8 @@
-// Express application factory.
+// Express application factory. Closes R2, S3, S5, S9, S10.
 //
-// Replaces nockmarket.js:56-127. Defects closed here:
-//   R2  — express.createServer() was removed in Express 3 (2012).
-//   S5  — no CSRF protection on any state-changing route.
-//   S9  — no rate limiting anywhere; /login, /signup and the username
-//         lookup were all freely brute-forceable.
-//   S10 — MemoryStore sessions (see src/auth/session.js).
-//   S3  — request logging that dumped plaintext passwords.
-//
-// Exported as a factory taking its dependencies so tests can drive it with
-// supertest and fakes, without a database, a network, or a listening port.
-// src/server.js owns listen() and the process lifecycle.
+// Takes its dependencies as arguments so tests can drive it with supertest
+// and fakes — no database, no network, no listening port. src/server.js
+// owns listen() and the process lifecycle.
 import express from 'express';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -44,9 +36,8 @@ export function createApp({
 }) {
   const app = express();
 
-  // Must precede session/rate-limit so `secure` cookies and client-IP
-  // detection work behind a proxy. Without it, secure cookies are never
-  // set in production and every request appears to come from the proxy.
+  // Must precede session and rate-limiting: without it, secure cookies are
+  // never set in production and every request appears to come from the proxy.
   app.set('trust proxy', config.trustProxy);
 
   app.set('views', path.join(projectRoot, 'views'));
@@ -55,8 +46,7 @@ export function createApp({
   app.use(
     pinoHttp({
       logger,
-      // Never serialise the body — it carries plaintext passwords on
-      // /login and /signup. This is the structural fix for S3.
+      // Never serialise the body: it carries plaintext passwords (S3).
       serializers: {
         req: (req) => ({ method: req.method, url: req.url }),
         res: (res) => ({ statusCode: res.statusCode }),
@@ -69,9 +59,8 @@ export function createApp({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          // No 'unsafe-inline'. P3a moves the inline <script> out of
-          // chart.ejs and the inline style= attributes out of
-          // portfolio.ejs rather than the policy being weakened for them.
+          // No 'unsafe-inline' — the views were changed to suit the policy
+          // rather than the policy weakened to suit them.
           scriptSrc: ["'self'"],
           styleSrc: ["'self'"],
           imgSrc: ["'self'", 'data:'],
@@ -92,9 +81,8 @@ export function createApp({
   app.use(csrfProtection());
 
   app.use(express.static(path.join(projectRoot, 'public')));
-  // Pico.css and the uPlot bundle are served straight from node_modules
-  // rather than vendored into public/ — that vendoring is what left six
-  // stale minified libraries in the 2014 tree.
+  // Served from node_modules rather than vendored into public/ — vendoring
+  // is what left ten stale minified files in the 2014 tree.
   app.use('/vendor/pico', express.static(path.join(projectRoot, 'node_modules/@picocss/pico/css')));
   app.use('/vendor/uplot', express.static(path.join(projectRoot, 'node_modules/uplot/dist')));
 
@@ -102,9 +90,8 @@ export function createApp({
     if (req.session?.userId) {
       return next();
     }
-    // S6: /add-stock previously had no guard at all, and the resulting
-    // `new ObjectID(undefined)` minted a fresh id so the write silently
-    // vanished instead of erroring.
+    // S6: /add-stock had no guard, and `new ObjectID(undefined)` minted a
+    // fresh id, so the write silently vanished instead of erroring.
     if (req.xhr || req.path.startsWith('/api/')) {
       return res.status(401).json({ errors: ['Authentication required.'] });
     }
@@ -140,9 +127,8 @@ export function createApp({
     return res.json({ errors: ['Not found.'] });
   });
 
-  // Express 5 forwards rejected promises from async handlers here
-  // automatically, which is what lets every route above use await without
-  // its own try/catch.
+  // Express 5 forwards rejected promises here, which is what lets the routes
+  // above use await without their own try/catch.
   // eslint-disable-next-line no-unused-vars -- Express identifies error handlers by arity
   app.use((err, req, res, next) => {
     // Match on the code only. An earlier version also matched /csrf/i
@@ -162,9 +148,8 @@ export function createApp({
   return app;
 }
 
-// pino-http reads internals off the logger (levels.values), so this must be
-// a real pino instance rather than a hand-rolled noop object. 'silent'
-// keeps test output clean without changing any code paths.
+// pino-http reads internals off the logger (levels.values), so a hand-rolled
+// noop object throws here.
 function defaultLogger() {
   return pino({ level: 'silent' });
 }

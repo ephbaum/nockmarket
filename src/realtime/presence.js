@@ -1,34 +1,17 @@
 // Who is currently in the chat room.
 //
-// Replaces the `online` array in lib/nocklib.js (C2), which had two bugs:
-//
-//   1. Departure did `online.splice(online.indexOf(username), 1)`. When the
-//      username was absent, indexOf returns -1 and splice(-1, 1) removes
-//      the LAST element — i.e. it silently kicked an unrelated user out of
-//      the list. Any disconnect for someone not in the array corrupted it.
-//   2. Arrival did an unconditional `online.push(username)`, so opening a
-//      second tab listed you twice, and closing one of them removed only
-//      one entry.
-//
-// Both disappear if presence is keyed by username and refcounted by
-// connection: a user is present exactly when they hold >= 1 socket.
+// Replaces the `online` array in lib/nocklib.js (C2), where splice(-1, 1) on
+// a missing username silently evicted an unrelated user, and an
+// unconditional push listed you twice per tab. Keying by username and
+// refcounting connections makes both unrepresentable: you are present
+// exactly while you hold at least one socket.
 
-/**
- * @returns {{ join(username, socketId): boolean,
- *             leave(username, socketId): boolean,
- *             socketsFor(username): string[],
- *             list(): string[],
- *             count(): number }}
- */
 export function createPresence() {
   /** @type {Map<string, Set<string>>} */
   const byUsername = new Map();
 
   return {
-    /**
-     * @returns {boolean} true only when this is the user's FIRST socket,
-     *   i.e. when other clients should be told they arrived.
-     */
+    /** @returns {boolean} true only on the user's FIRST socket. */
     join(username, socketId) {
       if (!username || !socketId) {
         return false;
@@ -44,9 +27,9 @@ export function createPresence() {
     },
 
     /**
-     * @returns {boolean} true only when the user's LAST socket went away.
-     *   A leave for an unknown user or socket is a no-op that returns
-     *   false — it can never affect anyone else's presence (C2).
+     * @returns {boolean} true only when the user's LAST socket went away. A
+     *   leave for an unknown user is a no-op — it can never touch anyone
+     *   else's presence (C2).
      */
     leave(username, socketId) {
       const sockets = byUsername.get(username);
@@ -61,12 +44,11 @@ export function createPresence() {
       return false;
     },
 
-    /** Every socket id held by a user — used to disconnect them on logout. */
+    /** Used to disconnect a user's sockets on logout. */
     socketsFor(username) {
       return [...(byUsername.get(username) ?? [])];
     },
 
-    /** Distinct usernames present, each appearing exactly once. */
     list() {
       return [...byUsername.keys()].sort();
     },

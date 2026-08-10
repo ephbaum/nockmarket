@@ -1,13 +1,9 @@
 // Random order generation — pure, seedable, no I/O.
 //
-// Extracted from nocklib.generateRandomOrder (lib/nocklib.js:135-170),
-// which reached directly into the book's internals
-// (exchangeData.buys.prices.peek()). It now takes bestBid/bestAsk as
-// plain numbers, so the engine's data structures stay private and this
-// function is trivially testable.
-//
-// Takes an injected RNG so sequences are reproducible in tests; the old
-// version called Math.random() five times inline.
+// The 2014 version reached into the book's internals
+// (exchangeData.buys.prices.peek()) and called Math.random() inline. Taking
+// bestBid/bestAsk as numbers and an injected RNG keeps the engine's data
+// structures private and makes sequences reproducible.
 
 const PRICE_FLOOR = 35;
 const PRICE_RANGE = 10;
@@ -33,10 +29,8 @@ export function generateRandomOrder({ bestBid = null, bestAsk = null, rng = Math
   const shift = Math.floor((rng() * PRICE_RANGE) / 2);
   price += rng() > 0.5 ? shift : -shift;
 
-  // The 2014 version could walk the price to zero or negative over a long
-  // run of downward shifts; submit() now rejects that outright, so clamp
-  // to a sane floor rather than generating an order the engine will throw
-  // on (C8's sibling — an invalid draw must not kill the loop).
+  // A long run of downward shifts could walk the price to zero, and
+  // submit() rejects that — an invalid draw must not kill the loop.
   price = Math.max(1, price);
 
   const volume = Math.floor(rng() * VOLUME_RANGE) + VOLUME_FLOOR;
@@ -45,8 +39,7 @@ export function generateRandomOrder({ bestBid = null, bestAsk = null, rng = Math
 }
 
 /**
- * mulberry32 — small, fast, seedable PRNG. Used so a simulator run can be
- * replayed exactly in tests.
+ * mulberry32 — seedable PRNG, so a simulator run replays exactly in tests.
  * @param {number} seed
  * @returns {() => number}
  */

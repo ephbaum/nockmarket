@@ -1,20 +1,13 @@
-// src/db/transactions.js
-//
-// All order/trade persistence. Nothing outside this module talks to the
-// `transactions` collection directly. Signatures here match the frozen
-// "Database repository signatures" section of README.md exactly.
+// All order/trade persistence. Signatures match the repository contract in
+// README.md.
 import { getDb } from './client.js';
 
 function transactions() {
   return getDb().collection('transactions');
 }
 
-/**
- * Stamp a real timestamp (C7) — the legacy code reverse-engineered `ts`
- * from an ObjectId hex prefix, which only has 1-second granularity.
- * Honors a caller-supplied `ts` (the documented input shape includes
- * one) but always fills a real Date when it's missing.
- */
+// C7: a real timestamp. The legacy code reverse-engineered `ts` from an
+// ObjectId hex prefix, which has only 1-second granularity.
 function withTimestamp(doc) {
   return { ...doc, ts: doc.ts instanceof Date ? doc.ts : new Date() };
 }
@@ -24,9 +17,9 @@ function toPlainDoc(doc, insertedId) {
 }
 
 /**
- * Persist a submitted order (independent of whether it traded).
+ * Persisted whether or not the order traded.
  * @param {{ stock: string, side: 'buy'|'sell', price: number, volume: number, ts: Date }} order
- * @returns {Promise<object>} the stored order document, including `_id`.
+ * @returns {Promise<object>}
  */
 export async function insertOrder(order) {
   const doc = withTimestamp(order);
@@ -35,11 +28,10 @@ export async function insertOrder(order) {
 }
 
 /**
- * Persist the trade(s) a single order submission produced. Called with
- * the trades `OrderBook#submit()` actually returned — never re-derived
- * from a separately-read book state (that mismatch was defect E2).
+ * Must be called with the trades submit() returned, never re-derived from a
+ * separately-read book — that mismatch was E2.
  * @param {Array<{ stock: string, price: number, volume: number, ts: Date }>} trades
- * @returns {Promise<object[]>} the stored trade documents, including `_id`.
+ * @returns {Promise<object[]>}
  */
 export async function insertTrades(trades) {
   if (!Array.isArray(trades) || trades.length === 0) {
@@ -52,10 +44,8 @@ export async function insertTrades(trades) {
 
 /**
  * @param {{ stock: string, limit?: number }} query - `stock` filters to one
- *   ticker (fixes the old code merging every ticker into one series);
- *   `limit` bounds the result count, most recent first, ordered by the
- *   real stored `ts` (not reverse-engineered from an ObjectId hex prefix).
- * @returns {Promise<object[]>}
+ *   ticker; the old code merged every ticker into one series (C6).
+ * @returns {Promise<object[]>} most recent first
  */
 export async function findTrades({ stock, limit } = {}) {
   const query = {};

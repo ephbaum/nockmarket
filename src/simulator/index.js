@@ -1,25 +1,13 @@
 // The market simulator: submits random orders against one book per symbol.
 //
-// Replaces submitRandomOrder in nockmarket.js:18-54. Two defects closed:
+// E2 — the old loop kept the pre-order book in a local, reassigned the slot
+// to the new book, then read `.trades` off the stale local, so every trade
+// was persisted one order late and stamped with the NEXT order's side.
+// submit() returning its own trades removes the second object entirely,
+// which makes the bug unrepresentable rather than merely fixed.
 //
-// E2 (stale trades) — the old loop read the trades off the WRONG object:
-//
-//     var exchangeData = allData[index];              // pre-order book
-//     allData[index] = exch.buy(...);                 // new book returned
-//     db.insertOne('transactions', ord, function () {
-//       if (exchangeData.trades && ...) {             // <- previous order's
-//         var trades = exchangeData.trades.map(...);  //    trades!
-//         trade.init = (ord.type == exch.BUY) ...     // <- stamped with the
-//
-//   So every trade was persisted one order late and labelled with the
-//   NEXT order's side. Here submit() returns its own trades and we
-//   persist exactly those, in the same tick — there is no second object
-//   to read from, which makes the bug unrepresentable rather than fixed.
-//
-// C8 (no stop signal) — the old loop re-armed setTimeout unconditionally
-//   with no way to halt it, so anything that imported the module kept the
-//   process alive forever and tests hung. start()/stop() are explicit and
-//   the timer is unref'd.
+// C8 — it also re-armed setTimeout with no way to halt, so importing the
+// module kept the process alive and hung tests.
 import { OrderBook } from '../order-book/index.js';
 import { buildMarketPayload } from '../realtime/market.js';
 import { createRng, generateRandomOrder } from './random-order.js';
@@ -60,15 +48,11 @@ export function createSimulator({
         rng,
       });
 
-      // submit() throws on a non-finite or non-positive price/volume.
-      // Guard here so one bad draw can never take the loop (and with it
-      // the whole process) down.
       const result = book.submit({ ...order, stock: symbol });
 
       await sink.insertOrder({ ...order, stock: symbol, ts: new Date() });
 
-      // E2: persist the trades THIS order produced, not whatever happened
-      // to be hanging off a previous book object.
+      // E2: the trades THIS order produced.
       if (result.trades.length > 0) {
         await sink.insertTrades(
           result.trades.map((t) => ({
@@ -81,8 +65,7 @@ export function createSimulator({
         );
       }
 
-      // Broadcast on every order, not only when a trade occurs — the
-      // depth ladder changes either way.
+      // Every order, not only trades — the ladder changes either way.
       publish(buildMarketPayload(symbol, book, result.trades.at(-1) ?? null));
     } catch (err) {
       logger.error({ err, symbol }, 'simulator tick failed');
@@ -97,8 +80,7 @@ export function createSimulator({
     }
     const delay = Math.floor(rng() * (maxMs - minMs)) + minMs;
     const timer = setTimeoutFn(() => tick(symbol), delay);
-    // Never hold the event loop open on the simulator's account.
-    timer?.unref?.();
+    timer?.unref?.(); // never hold the event loop open
     timers.set(symbol, timer);
   }
 
@@ -113,7 +95,7 @@ export function createSimulator({
       }
     },
 
-    /** Halts the loop. Safe to call when not started, and idempotent. */
+    /** Idempotent, and safe to call before start(). */
     stop() {
       running = false;
       for (const timer of timers.values()) {
@@ -126,7 +108,6 @@ export function createSimulator({
       return running;
     },
 
-    /** Exposed for tests and for the initial market snapshot. */
     books,
   };
 }

@@ -1,10 +1,8 @@
-// src/db/client.js
+// Owns the single MongoClient/Db for the process.
 //
-// Owns the single MongoClient/Db for the process. Deliberately does
-// **nothing** at import time (no connection, no client construction) —
-// the old lib/db.js constructed its Db object and connected at require
-// time, which made anything that imported it untestable and unstoppable.
-// Callers (src/server.js, tests) must explicitly call connect().
+// Does nothing at import time. The old lib/db.js constructed its Db and
+// connected at require time, which made anything importing it untestable
+// and unstoppable — callers must call connect() explicitly.
 import { MongoClient } from 'mongodb';
 
 let client = null;
@@ -25,13 +23,11 @@ export class IndexBuildError extends Error {
 }
 
 /**
- * Connect to MongoDB. Idempotent: calling it again while already
- * connected returns the existing Db without opening a second connection.
- * @param {string} uri - MongoDB connection URI.
- * @param {object} [options] - Passed to MongoClient, except `dbName`
- *   (pulled out and used to select the database via `client.db(dbName)`
- *   instead of relying on the URI's path — handy for tests that want a
- *   uniquely-named database per run without touching the URI string).
+ * Idempotent — a second call while connected returns the existing Db.
+ * @param {string} uri
+ * @param {object} [options] - passed to MongoClient, except `dbName`, which
+ *   selects the database directly so tests can use a unique name per run
+ *   without rewriting the URI.
  * @returns {Promise<import('mongodb').Db>}
  */
 export async function connect(uri, options = {}) {
@@ -68,9 +64,8 @@ export function getDb() {
 }
 
 /**
- * The underlying MongoClient. Exposed so the session store (connect-mongo)
- * can reuse this connection instead of dialling a second one — sharing the
- * client is the point of replacing the old MemoryStore (S10).
+ * Exposed so connect-mongo reuses this connection rather than dialling a
+ * second one (S10).
  * @returns {import('mongodb').MongoClient}
  * @throws {Error} if connect() has not been called yet.
  */
@@ -82,26 +77,16 @@ export function getClient() {
 }
 
 /**
- * Create (or confirm) the indexes the app depends on. Idempotent — safe
- * to call on every startup; MongoDB no-ops a createIndex call that
- * already matches an existing index.
+ * Idempotent — MongoDB no-ops a createIndex that matches an existing index.
  *
- * - unique index on users.usernameLower (S7): makes the database the
- *   arbiter of username uniqueness instead of a client-side, racy
- *   findOne-then-insert check.
- * - transactions: { stock: 1, ts: -1 } for the per-symbol trade-history
- *   query (findTrades), and { side: 1, ts: -1 } for filtering by the
- *   initiating side.
+ * The unique index on users.usernameLower (S7) makes the database the
+ * arbiter of username uniqueness rather than a racy findOne-then-insert.
+ * If the collection already holds case-duplicates, the build fails and is
+ * re-thrown as an IndexBuildError naming the collisions, since the raw
+ * driver error says nothing actionable.
  *
- *   Note: the 2014 schema called this field `init` ('b'/'s'). The rewrite
- *   stores `side` ('buy'/'sell') — see insertOrder in transactions.js —
- *   so the index follows the field that is actually written.
- *
- * If the users collection already contains case-duplicate usernames
- * (e.g. "bob" and "Bob"), the unique index build fails server-side. That
- * failure is caught here, the actual colliding usernameLower values are
- * looked up, and an IndexBuildError naming them is thrown instead of
- * letting the raw duplicate-key error propagate.
+ * The transactions index follows `side`; the 2014 schema's `init` field is
+ * no longer written by anything.
  */
 export async function ensureIndexes(database = getDb()) {
   try {

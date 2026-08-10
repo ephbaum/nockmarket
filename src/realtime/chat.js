@@ -1,16 +1,12 @@
 // Chat and presence event handlers.
 //
-// Event names come from the frozen contract in README.md. Note in
-// particular that the 2014 code emitted a custom `disconnect` event
-// (lib/nocklib.js:91) to announce departures. `disconnect` is RESERVED in
-// socket.io v3+ and emitting it throws at runtime, so departures are
-// announced as `presence:leave` (R3).
+// The 2014 code emitted a custom `disconnect` event to announce departures.
+// That name is RESERVED in socket.io v3+ and emitting it throws at runtime,
+// hence `presence:leave` (R3).
 //
-// The server sends structured fields — { username, text } — rather than the
-// old pre-concatenated `username + ': ' + message + '\n'` string. The
-// client renders them with textContent, which is what closes the stored
-// XSS (S4); handing it a ready-made string invites innerHTML on the other
-// end.
+// Payloads carry { username, text } separately rather than a
+// pre-concatenated string: the client renders with textContent, and handing
+// it ready-made markup is what made the old XSS natural (S4).
 const MAX_MESSAGE_LENGTH = 1000;
 
 /**
@@ -24,9 +20,8 @@ export function registerChatHandlers(io, socket, { presence, users, marketState,
   socket.on('presence:join', () => {
     const isFirstConnection = presence.join(username, socket.id);
     socket.emit('presence:list', { users: presence.list() });
+    // A second tab must not produce a second "joined" message (C2).
     if (isFirstConnection) {
-      // Only announce on the user's first socket — a second tab must not
-      // produce a second "joined" message (C2).
       socket.broadcast.emit('presence:join', { username });
     }
   });
@@ -65,9 +60,8 @@ export function registerChatHandlers(io, socket, { presence, users, marketState,
     }
   });
 
+  // Listening for 'disconnect' is fine; only emitting it violates R3.
   socket.on('disconnect', () => {
-    // Listening for 'disconnect' is fine and expected; only EMITTING it is
-    // the reserved-name violation (R3).
     const wasLastConnection = presence.leave(username, socket.id);
     if (wasLastConnection) {
       socket.broadcast.emit('presence:leave', { username });

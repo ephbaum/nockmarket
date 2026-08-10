@@ -103,9 +103,7 @@ export function getClient() {
  * looked up, and an IndexBuildError naming them is thrown instead of
  * letting the raw duplicate-key error propagate.
  */
-export async function ensureIndexes() {
-  const database = getDb();
-
+export async function ensureIndexes(database = getDb()) {
   try {
     await database
       .collection('users')

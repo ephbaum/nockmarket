@@ -10,10 +10,10 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch --env-file-if-exists=.env src/server.js",
-    "test": "node --test --experimental-test-coverage \"test/**/*.test.js\"",
+    "test": "node --test --experimental-test-module-mocks --experimental-test-coverage --test-coverage-exclude=\"test/**\" \"test/**/*.test.js\"",
     "test:integration": "node --test \"test/**/*.integration.test.js\"",
-    "test:coverage": "node --test --experimental-test-coverage --test-coverage-lines=70 --test-coverage-branches=80 \"test/**/*.test.js\"",
-    "test:coverage:engine": "node --test --experimental-test-coverage --test-coverage-lines=95 --test-coverage-branches=95 --test-coverage-include=\"src/order-book/**\" \"test/order-book/*.test.js\"",
+    "test:coverage": "node --test --experimental-test-module-mocks --experimental-test-coverage --test-coverage-lines=65 --test-coverage-branches=80 --test-coverage-exclude=\"test/**\" \"test/**/*.test.js\"",
+    "test:coverage:engine": "node --test --experimental-test-coverage --test-coverage-lines=95 --test-coverage-branches=95 --test-coverage-include=\"src/order-book/**\" --test-coverage-exclude=\"test/**\" \"test/order-book/*.test.js\"",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

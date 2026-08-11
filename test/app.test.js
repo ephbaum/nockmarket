@@ -303,6 +303,152 @@ describe('auth flow', () => {
   });
 });
 
+describe('POST /api/add-stock: authenticated success path', () => {
+  test('C3/C11: a valid post gets a 200 JSON reply with the priced portfolio, not a raw string', async () => {
+    const { app } = buildApp();
+    const agent = request.agent(app);
+    const token = await startSession(agent);
+
+    const signup = await agent.post('/signup').set('Accept', 'application/json').send({
+      _csrf: token,
+      username: 'dave',
+      email: 'dave@example.com',
+      password: 'correct-horse-battery',
+      passwordConfirm: 'correct-horse-battery',
+    });
+    assert.equal(signup.status, 200, JSON.stringify(signup.body));
+
+    const res = await agent
+      .post('/api/add-stock')
+      .set('Accept', 'application/json')
+      .send({ _csrf: signup.body.csrfToken, stock: 'AAPL', volume: 3 });
+
+    // C3: the old handler was `if (req.xhr) {...}` with no else, so a
+    // non-XHR post never got a response at all.
+    assert.equal(res.status, 200, JSON.stringify(res.body));
+
+    // C11: the old handler did res.send(price), a raw CSV string, not JSON.
+    assert.equal(res.type, 'application/json');
+    assert.equal(res.body.stock, 'AAPL');
+    assert.equal(res.body.volume, 3);
+    assert.ok(Array.isArray(res.body.portfolio));
+    assert.equal(res.body.portfolio.length, 1);
+
+    const [holding] = res.body.portfolio;
+    assert.deepEqual(Object.keys(holding).sort(), ['price', 'stale', 'stock', 'volume']);
+    assert.equal(holding.stock, 'AAPL');
+    assert.equal(holding.volume, 3);
+    assert.equal(typeof holding.price, 'number');
+    assert.equal(typeof holding.stale, 'boolean');
+  });
+
+  test('C1: an unresolvable holding does not shift prices onto the wrong symbol at the route', async () => {
+    const existing = {
+      _id: 'id-1',
+      username: 'erin',
+      email: 'erin@example.com',
+      passwordHash: await hash('correct-horse-battery'),
+      passwordAlgo: 'scrypt',
+      portfolio: [
+        { stock: 'AAPL', volume: 1 },
+        { stock: 'BADSYM', volume: 1 },
+      ],
+    };
+
+    // Resolves everything except BADSYM. A positional zip that dropped
+    // BADSYM's null out of the results list (rather than keying results by
+    // symbol) would shift MSFT's price onto BADSYM and leave MSFT with
+    // none — the original C1 bug, reproduced here through the live route
+    // instead of by calling priceHoldings directly.
+    const quotes = {
+      name: 'test',
+      async getQuotes(symbols) {
+        return new Map(
+          symbols.map((s) => [
+            s,
+            s === 'BADSYM'
+              ? null
+              : {
+                  symbol: s,
+                  price: s === 'AAPL' ? 100 : 200,
+                  currency: 'USD',
+                  asOf: new Date(),
+                  source: 'test',
+                  stale: false,
+                },
+          ])
+        );
+      },
+    };
+
+    const { app } = buildApp({ seedUsers: [existing], quotes });
+    const agent = request.agent(app);
+    const token = await startSession(agent);
+
+    const login = await agent
+      .post('/login')
+      .set('Accept', 'application/json')
+      .send({ _csrf: token, username: 'erin', password: 'correct-horse-battery' });
+    assert.equal(login.status, 200, JSON.stringify(login.body));
+
+    const res = await agent
+      .post('/api/add-stock')
+      .set('Accept', 'application/json')
+      .send({ _csrf: login.body.csrfToken, stock: 'MSFT', volume: 1 });
+
+    assert.equal(res.status, 200, JSON.stringify(res.body));
+    // Keyed, never positional: BADSYM must stay null and MSFT must keep
+    // its own price, whatever order priceHoldings happens to iterate in.
+    assert.deepEqual(
+      res.body.portfolio.map((p) => [p.stock, p.price]),
+      [
+        ['AAPL', 100],
+        ['BADSYM', null],
+        ['MSFT', 200],
+      ]
+    );
+  });
+});
+
+describe('C4: /portfolio with a session that outlives its user', () => {
+  test('a deleted user is treated as logged out, not a 500', async () => {
+    const existing = {
+      _id: 'id-1',
+      username: 'frank',
+      email: 'frank@example.com',
+      passwordHash: await hash('correct-horse-battery'),
+      passwordAlgo: 'scrypt',
+      portfolio: [],
+    };
+    const { app, store } = buildApp({ seedUsers: [existing] });
+    const agent = request.agent(app);
+    const token = await startSession(agent);
+
+    const login = await agent
+      .post('/login')
+      .set('Accept', 'application/json')
+      .send({ _csrf: token, username: 'frank', password: 'correct-horse-battery' });
+    assert.equal(login.status, 200, JSON.stringify(login.body));
+
+    // The account is gone (deletion, or a session store that outlived a
+    // database reset) but the session cookie is still live.
+    store.delete('frank');
+
+    const res = await agent.get('/portfolio').redirects(0);
+
+    // C4: findById returns null; the route must destroy the stale session
+    // and redirect rather than dereferencing user.email into a 500.
+    assert.equal(res.status, 302, JSON.stringify(res.body));
+    assert.equal(res.headers.location, '/');
+
+    // The session must actually be destroyed, not just this one response
+    // redirected: a follow-up request must no longer be treated as authed.
+    const after = await agent.get('/portfolio').redirects(0);
+    assert.equal(after.status, 302);
+    assert.equal(after.headers.location, '/');
+  });
+});
+
 describe('C1 regression: quotes are paired by symbol, never by position', () => {
   test('an unresolvable symbol does not shift prices onto other holdings', async () => {
     const existing = {

@@ -1,63 +1,26 @@
-<!-- gist from https://gist.github.com/spbooks/3949958 per documentation -->
+<!doctype html>
+<html lang="en">
+  <%- include('partials/head', { title: 'Nockmarket — Chart', extraStylesheets: ['/vendor/uplot/uPlot.min.css'] }) %>
+  <body>
+    <%- include('partials/nav', { username: typeof username !== 'undefined' ? username : null, active: 'chart', csrfToken }) %>
 
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
-<script src="http://code.highcharts.com/stock/highstock.js" type="text/javascript"></script>
-<script type="text/javascript">
-$(function() {
-    $.getJSON('/api/trades', function(data) {
-        // create the chart
-        chart = new Highcharts.StockChart({
-            chart : {
-                renderTo : 'container'
-            },
+    <main class="container">
+      <hgroup>
+        <h1>Trade History</h1>
+        <p>Recent trades for a selected symbol.</p>
+      </hgroup>
 
-            title: {
-                text: 'Trades'
-            },
-            
-            xAxis: {
-                gapGridLineWidth: 0
-            },
-            
-            rangeSelector : {
-                buttons : [{
-                    type : 'hour',
-                    count : 1,
-                    text : '1h'
-                }, {
-                    type : 'day',
-                    count : 1,
-                    text : '1D'
-                }, {
-                    type : 'all',
-                    count : 1,
-                    text : 'All'
-                }],
-                selected : 1,
-                inputEnabled : false
-            },
-            
-            series : [{
-                name : 'NOCK',
-                type: 'area',
-                data : data,
-                gapSize: 5,
-                tooltip: {
-                    valueDecimals: 2
-                },
-                fillColor : {
-                    linearGradient : {
-                        x1: 0, 
-                        y1: 0, 
-                        x2: 0, 
-                        y2: 1
-                    },
-                    stops : [[0, Highcharts.getOptions().colors[0]], [1, 'rgba(0,0,0,0)']]
-                },
-                threshold: null
-            }]
-        });
-    });
-});
-</script>
-<div id="container" style="width: 100%; height: 400px"></div>
+      <label for="stock-select">Symbol</label>
+      <select id="stock-select">
+        <% symbols.forEach(function (sym) { %>
+        <option value="<%= sym %>"><%= sym %></option>
+        <% }) %>
+      </select>
+
+      <p id="chart-error" class="form-errors" role="alert"></p>
+      <div id="chart-container" class="chart-container"></div>
+    </main>
+
+    <script type="module" src="/js/chart.js"></script>
+  </body>
+</html>

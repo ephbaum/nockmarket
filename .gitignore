@@ -1,5 +1,5 @@
 node_modules
-dnode
+.env
+coverage/
+*.log
 .DS_Store
-err.log
-out.log

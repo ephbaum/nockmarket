@@ -1,7 +1,107 @@
-.trade-button {
-  width: 100%;
+/* App-wide styles layered on top of Pico.css. Pico handles every semantic
+   element (nav, article, table, form, dialog); this file only covers the
+   handful of custom widgets Pico has no opinion about: the tab switcher,
+   the live order-book ladder, and chat. No inline `style=` attributes
+   appear anywhere in views/ — this file is where all of that moved. */
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: var(--pico-border-width) solid var(--pico-muted-border-color);
+  margin-bottom: var(--pico-spacing);
+  padding-bottom: 0;
 }
 
-.row-padded {
-  padding: 1em 0;
+.tabs button {
+  margin: 0;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  color: var(--pico-muted-color);
+  padding: 0.5rem 1rem;
+  width: auto;
+}
+
+.tabs button[aria-selected='true'] {
+  color: var(--pico-primary);
+  border-bottom-color: var(--pico-primary);
+}
+
+.tabs button:hover {
+  background: none;
+  color: var(--pico-primary);
+}
+
+.form-errors {
+  color: var(--pico-del-color, #c62828);
+  min-height: 1.25em;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.trade-cell {
+  font-variant-numeric: tabular-nums;
+}
+
+.trade-cell.flash {
+  animation: trade-flash 1s ease-out;
+}
+
+@keyframes trade-flash {
+  from {
+    background-color: var(--pico-ins-color);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+.chat-log {
+  height: 20rem;
+  overflow-y: auto;
+  border: var(--pico-border-width) solid var(--pico-muted-border-color);
+  border-radius: var(--pico-border-radius);
+  padding: var(--pico-spacing);
+  margin-bottom: var(--pico-spacing);
+  background: var(--pico-card-background-color);
+}
+
+.chat-message {
+  margin: 0 0 0.5em;
+  overflow-wrap: anywhere;
+}
+
+.chat-message time {
+  color: var(--pico-muted-color);
+  font-size: 0.85em;
+}
+
+.chat-users {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.chat-user {
+  display: inline-block;
+  background: var(--pico-primary);
+  color: var(--pico-primary-inverse);
+  border-radius: var(--pico-border-radius);
+  padding: 0.15em 0.6em;
+  font-size: 0.85em;
+}
+
+.nav-username {
+  color: var(--pico-muted-color);
+}
+
+.logout-form {
+  margin: 0;
+}
+
+.chart-container {
+  margin-top: var(--pico-spacing);
 }

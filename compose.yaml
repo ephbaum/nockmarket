@@ -1,0 +1,52 @@
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    # Published on the host so `node scripts/seed.js` and one-off queries
+    # can reach the stack from outside a container. Bound to 127.0.0.1 so
+    # an unauthenticated dev database is never exposed to the network.
+    ports:
+      - '127.0.0.1:27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  app:
+    build: .
+    init: true
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - '3000:3000'
+    environment:
+      PORT: '3000'
+      NODE_ENV: production
+      MONGODB_URI: mongodb://mongo:27017/nockmarket
+      # Demo-only value so `docker compose up` works with zero setup and zero
+      # secrets management. src/config.js fails fast on a missing
+      # SESSION_SECRET in production rather than silently defaulting there,
+      # so compose must supply one explicitly. Override this for any
+      # real deployment.
+      SESSION_SECRET: compose-dev-secret-change-me
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  mongo-data:

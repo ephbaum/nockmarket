@@ -1,0 +1,9 @@
+package-lock.json
+coverage/
+node_modules/
+
+# public/lib/, public/js/ and public/stylesheets/ were ignored here while
+# they held pre-modernization vendored code and Bootstrap-era CSS pending
+# rewrite by P3a. That package deleted the vendored files and rewrote the
+# views/JS/CSS from scratch, so all three entries are gone.
+README.md

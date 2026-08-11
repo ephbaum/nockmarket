@@ -1,0 +1,11 @@
+<head>
+  <meta charset="utf-8" />
+  <title><%= typeof title !== 'undefined' ? title : 'Nockmarket' %></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="csrf-token" content="<%= csrfToken %>" />
+  <link rel="stylesheet" href="/vendor/pico/pico.min.css" />
+  <% (typeof extraStylesheets !== 'undefined' ? extraStylesheets : []).forEach(function (href) { %>
+  <link rel="stylesheet" href="<%= href %>" />
+  <% }) %>
+  <link rel="stylesheet" href="/stylesheets/nockmarket.css" />
+</head>

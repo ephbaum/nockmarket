@@ -37,7 +37,7 @@
     "@eslint/js": "^10",
     "eslint": "^10.8.1",
     "eslint-config-prettier": "^10",
-    "globals": "^16",
+    "globals": "^17",
     "prettier": "^3.9.6",
     "socket.io-client": "^4.8.3",
     "supertest": "^7.2.2"
